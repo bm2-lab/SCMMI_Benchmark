@@ -4,7 +4,7 @@
 
 ### Description
 
-SCMMI_benchmark is a benchmark pipeline for evaluating the usability, accuracy and robustness of single-cell multimodal integration algorithms, including 16 paired scRNA+scATAC integration methods, 13 unpaired scRNA+scATAC integration methods and 12 scRNA+ADT integration. This folder contains accuracy assessment scripts for benchmark analysis.
+SCMMI_benchmark is a benchmark pipeline for evaluating the usability, accuracy and robustness of single-cell multimodal integration algorithms, including 16 paired scRNA+scATAC integration methods, 13 unpaired scRNA+scATAC integration methods and 12 scRNA+ADT integration methods. This folder now contains accuracy assessment scripts for benchmark analysis.
 
 
 ### Assessment scripts for SCMMI_Benchmark manuscript
