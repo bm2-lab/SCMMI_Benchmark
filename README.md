@@ -12,7 +12,7 @@ SCMMI_benchmark is a benchmark pipeline for evaluating the usability, accuracy a
 The folder includes scripts to calculate single-embedding metrics and cross-embedding metrics for paired and unpaired multimodal integration.  <br>
 
 - single-embedding metrics [code](scripts/assess/single_embedding_metrics_benchmark.py)
-- cross-embedding metrics[code](scripts/assess/cross_embedding_metrics_benchmark.py)
+- cross-embedding metrics [code](scripts/assess/cross_embedding_metrics_benchmark.py)
 
 ### Datasets
 The benchmark baseline datasets can be downloaded from [single-cell multimodal integration challenge competition](https://openproblems.bio/events/2021-09_neurips/).  <br>
