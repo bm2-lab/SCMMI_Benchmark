@@ -214,9 +214,8 @@ def nearest_cell_celltype(
     return nearest_cell_cell_type_list
 
 
-# # unpaired_metrics
 
-def unpaired_metrics(
+def cross_metrics(
     adata,
     latent_paths,
     output_path,
@@ -255,59 +254,9 @@ def unpaired_metrics(
         adata.obsm[rna_latent_prefix] = rna_latent
         adata.obsm[atac_latent_prefix] = atac_latent
         
-        for mod in ['RNA', 'ATAC']:
-            mod_latent_prefix = latent_prefix + '-' + mod
-            # Cluster
-            if cluster_method == 'louvain':
-                # add 2 obsp：细胞间的distances矩阵和connectivities矩阵
-                sc.pp.neighbors(adata, use_rep=mod_latent_prefix, n_neighbors=30) # neighborhood graph based on UMAP
-                # 添加1个obs：louvain; 添加2个uns：neighbors字典和louvain字典
-            #     getNClusters(adata, n_cluster=num_clusters) # 使用Louvain聚类得到要求的cluster数量
-                sc.tl.louvain(adata) # Louvain 
-            elif cluster_method == 'kmeans':
-                kmeans = KMeans(n_clusters=num_clusters, random_state=2022).fit(adata.obsm[mod_latent_prefix]) # 添加1个obs：kmeans
-                adata.obs[cluster_method] = pd.Series(kmeans.labels_, index=adata.obs.index).astype('category')
-            elif cluster_method == 'hc': # hierachical clustering
-                hc = AgglomerativeClustering(n_clusters=num_clusters).fit(adata.obsm[mod_latent_prefix]) # 添加1个obs：hc
-                adata.obs[cluster_method] = pd.Series(hc.labels_,index=adata.obs.index).astype('category')
-
-            # 0. latent dimension
-            metrics.loc[latent_prefix+'-'+cluster_method, ['nCell' + '-' + mod]] = adata.obsm[mod_latent_prefix].shape[0]
-            metrics.loc[latent_prefix+'-'+cluster_method, ['nDimension' + '-' + mod]] = adata.obsm[mod_latent_prefix].shape[1]
-            # 1. adjusted rank index
-            ari = adjusted_rand_score(adata.obs[label], adata.obs[cluster_method])
-            metrics.loc[latent_prefix+'-'+cluster_method, ['ARI' + '-' + mod]] = [ari]
-            # 2. adjusted mutual information
-            ami = adjusted_mutual_info_score(adata.obs[label], adata.obs[cluster_method], average_method='arithmetic')
-            metrics.loc[latent_prefix+'-'+cluster_method, ['AMI' + '-' + mod]] = [ami]
-            # 3. kNN graph_connectivity
-            # embedding output
-#             sc.pp.neighbors(adata, use_rep=mod_latent_prefix)
-            graph_connectivity = scib.metrics.graph_connectivity(adata, batch)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['graph_connectivity' + '-' + mod]] = [graph_connectivity]
-            # 4. Batch ASW
-            Batch_ASW = scib.metrics.silhouette_batch(adata, batch_key='batch', group_key=label, embed=mod_latent_prefix, metric="euclidean", return_all=False, scale=True, verbose=False)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['Batch_ASW_batch' + '-' + mod]] = [Batch_ASW]
-            Batch_ASW = scib.metrics.silhouette_batch(adata, batch_key='Site', group_key=label, embed=mod_latent_prefix, metric="euclidean", return_all=False, scale=True, verbose=False)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['Batch_ASW_site' + '-' + mod]] = [Batch_ASW]
-#             Batch_ASW = scib.metrics.silhouette_batch(adata, batch_key='cell_type', group_key=label, embed=mod_latent_prefix, metric="euclidean", return_all=False, scale=True, verbose=False)
-#             metrics.loc[latent_prefix+'-'+cluster_method, ['Batch_ASW_celltype' + '-' + mod]] = [Batch_ASW]
-            # 5. silhouette
-            silhouette = scib.metrics.silhouette(adata, group_key=cluster_method, embed=mod_latent_prefix, metric="euclidean", scale=True)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['silhouette' + '-' + mod]] = [silhouette]
-            # 6. graph iLISI
-            adata.obsm["X_emb"] = adata.obsm[mod_latent_prefix]
-            graph_iLISI = scib.metrics.ilisi_graph(adata, batch_key=batch, type_="embed", k0=90, subsample=None, scale=True, n_cores=1, verbose=False)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['graph_iLISI' + '-' + mod]] = [graph_iLISI]
-            # 7. clisi_graph
-            graph_clisi = scib.metrics.clisi_graph(adata, batch_key=batch, label_key=label, type_="embed", k0=90, subsample=None, scale=True, n_cores=1, verbose=False)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['graph_clisi' + '-' + mod]] = [graph_clisi]
-            # 8. isolated_labels
-            isolated_labels = scib.metrics.isolated_labels(adata, batch_key=batch, label_key=label, embed=mod_latent_prefix, cluster=True, iso_threshold=None, return_all=False, verbose=False)
-            metrics.loc[latent_prefix+'-'+cluster_method, ['isolated_labels' + '-' + mod]] = [isolated_labels]
-        # 9. FOSCTTM
+        # 1. FOSCTTM
         metrics.loc[latent_prefix+'-'+cluster_method, ['FOSCTTM']] = [foscttm(adata.obsm[rna_latent_prefix], adata.obsm[atac_latent_prefix])]
-        # 10. nearest_cell_barcode
+        # 2. nearest_cell_barcode
         nearest_cell_barcode_list = nearest_cell_barcode(adata, rep_1=rna_latent_prefix, rep_2=atac_latent_prefix)
         metrics.loc[latent_prefix+'-'+cluster_method, ['nearest_cell_barcode' + '-' + 'RNA']] = [nearest_cell_barcode_list['RNA']]
         metrics.loc[latent_prefix+'-'+cluster_method, ['nearest_cell_barcode' + '-' + 'ATAC']] = [nearest_cell_barcode_list['ATAC']]
@@ -347,7 +296,7 @@ adata.obs = metadata.loc[adata.obs_names.to_list()].astype('category')
 
 latent_paths = get_latent_files(rep_path)
 latent_paths
-adata = unpaired_metrics(adata, latent_paths, output_path)
+adata = cross_metrics(adata, latent_paths, output_path)
 # del adata.raw
 adata.write_h5ad(output_path + "/metrics.h5ad")
 adata.uns['metrics'].to_csv(output_path + '/metrics.csv')
