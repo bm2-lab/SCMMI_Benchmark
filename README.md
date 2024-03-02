@@ -31,6 +31,6 @@ All datasets currently used in this benchmark study are listed below.
 | COVID19 CITE-seq   | RNA+ADT          | 143 donors                 | Human   | 781,123     | peripheral blood immune cells           |
 | Lymph node spatial | spatial+RNA+ADT  | 2 samples                  | Human   | 6843        | lymph node                              |
 | Thymus spatial     | spatial+RNA+ADT  | 4 samples                  | Mouse   | 17,824      | thymus                                  |
-| Spleen SPOTS       | spatial+RNA+ADT  | 2samples                   | Mouse   | 5,336       | spleen                                  |
+| Spleen SPOTS       | spatial+RNA+ADT  | 2 samples                  | Mouse   | 5,336       | spleen                                  |
 <br>
 
