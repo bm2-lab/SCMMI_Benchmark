@@ -21,16 +21,16 @@ The "assess" folder contains scripts to calculate single-embedding metrics and c
 
 ### Datasets
 All datasets currently used in this benchmark study are listed below.
-| dataset name       | multi-omics type | Batch                      | species | tissue                                  | cell number | tested tasks                                               |
-|--------------------|------------------|----------------------------|---------|-----------------------------------------|-------------|------------------------------------------------------------|
-| BMMC Multiome      | RNA + ATAC       | 12 donors from 4 sites     | Human   | bone marrow mononuclear cells           | 69,249      | All accuracy metrics and robustness metrics                |
-| BMMC CITE-seq      | RNA + ADT        | 12 donors from 4  sites    | Human   | bone marrow mononuclear cells           | 90,261      | All accuracy metrics and robustness metrics                |
-| HSPC Multiome      | RNA + ATAC       | 4 donors  of 5 time points | Human   | hematopoietic stem and progenitor cells | 105,942     | Batch removal, cell alignment and imputation               |
-| HSPC CITE-seq      | RNA + ADT        | 4 donors of 5 time points  | Human   | hematopoietic stem and progenitor cells | 70,988      | Batch removal, cell alignment and imputation               |
-| SHARE-seq skin     | RNA + ATAC       | -                          | Mouse   | skin                                    | 34,774      | Biological conservation, cell alignment and imputation     |
-| COVID19 CITE-seq   | RNA+ADT          | 143 donors                 | Human   | peripheral blood immune cells           | 781,123     | batch removal and paired and unpaired RNA+ADT Scalability, |
-| Lymph node spatial | spatial+RNA+ADT  | 2 samples                  | Human   | lymph node                              | 6843        | Biological conservation and batch removal                  |
-| Thymus spatial     | spatial+RNA+ADT  | 4 samples                  | Mouse   | thymus                                  | 17,824      | Batch removal                                              |
-| Spleen SPOTS       | spatial+RNA+ADT  | 2samples                   | Mouse   | spleen                                  | 5,336       | Batch removal                                              |
+| dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
+|--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
+| BMMC Multiome      | RNA + ATAC       | 12 donors from 4 sites     | Human   | 69,249      | bone marrow mononuclear cells           |
+| BMMC CITE-seq      | RNA + ADT        | 12 donors from 4  sites    | Human   | 90,261      | bone marrow mononuclear cells           |
+| HSPC Multiome      | RNA + ATAC       | 4 donors  of 5 time points | Human   | 105,942     | hematopoietic stem and progenitor cells |
+| HSPC CITE-seq      | RNA + ADT        | 4 donors of 5 time points  | Human   | 70,988      | hematopoietic stem and progenitor cells |
+| SHARE-seq skin     | RNA + ATAC       | -                          | Mouse   | 34,774      | skin                                    |
+| COVID19 CITE-seq   | RNA+ADT          | 143 donors                 | Human   | 781,123     | peripheral blood immune cells           |
+| Lymph node spatial | spatial+RNA+ADT  | 2 samples                  | Human   | 6843        | lymph node                              |
+| Thymus spatial     | spatial+RNA+ADT  | 4 samples                  | Mouse   | 17,824      | thymus                                  |
+| Spleen SPOTS       | spatial+RNA+ADT  | 2samples                   | Mouse   | 5,336       | spleen                                  |
 <br>
 
