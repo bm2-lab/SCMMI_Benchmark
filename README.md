@@ -21,6 +21,10 @@ The "assess" folder contains scripts to calculate single-embedding metrics and c
 - single-embedding metrics [code](scripts/assess/single_embedding_metrics_benchmark.py)
 - cross-embedding metrics [code](scripts/assess/cross_embedding_metrics_benchmark.py)
 
+### Spatial multimodal demo
+This folder contains demo scripts for three algorithms (mefisto, spatialglue and multimap) available for spatial multi-modal analysis. [repo](scripts/spatial/)
+
+
 ### Datasets
 All datasets currently used in this benchmark study are listed below.
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
