@@ -34,3 +34,5 @@ All datasets currently used in this benchmark study are listed below.
 | Spleen SPOTS       | spatial+RNA+ADT  | 2 samples                  | Mouse   | 5,336       | spleen                                  |
 <br>
 
+Ref.
+Benchmarking single-cell multi-modal data integrations. submitted
