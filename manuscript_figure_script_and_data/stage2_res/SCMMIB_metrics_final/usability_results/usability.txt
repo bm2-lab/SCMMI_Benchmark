@@ -1,0 +1,41 @@
+software	scRNA+scATAC	scRNA+ADT	Spatial scRNA+ADT	diagonal scRNA+scATAC	mosaic scRNA+scATAC	mosaic scRNA+ADT	Executable	Peer review	Accuracy benchmark	Tutorial	Function documentations
+bindSC		1		1			2	1	1	1	0
+CiteFuse		1					2	1	1	1	1
+cobolt	1				1		2	1	1	1	0
+DCCA	1						1	1	1	1	0
+DeepMAPS	1	1					0	1	1	1	0
+GCN-SC				1			0	1	0	0	0
+GLUE				1			2	1	1	1	1
+LIGER iNMF				1			2	1	1	1	1
+LIGER online iNMF				1			2	1	1	1	1
+LIGER UINMF				1			2	1	1	1	1
+MaxFuse		1		1			2	1	1	1	1
+MOFA+	1	1					2	1	1	1	1
+Multigrate	1	1			1	1	2	0	1	1	1
+MultiVI	1				1		2	1	1	1	1
+Pamona				1			1	1	1	1	1
+SAILERX	1						0	1	1	1	0
+scAI	1						2	1	1	1	1
+SCALEX		1		1			2	1	1	1	1
+scDEC	1						2	1	1	1	1
+sciPENN		1				1	2	1	1	1	0
+scMCs	1						0	1	1	0	0
+scMDC	1	1					2	1	1	1	1
+scMM	1	1					0	1	1	1	0
+scMVAE	1						1	1	1	1	0
+scMVP	1						2	1	1	1	0
+Seurat v3 CCA				1			2	1	1	1	1
+Seurat v4 RPCA				1			2	1	1	1	1
+Seurat v4 WNN	1	1					2	1	1	1	1
+SIMBA				1			2	1	1	1	1
+totalVI		1				1	2	1	1	1	1
+unionCom				1			1	1	1	1	1
+uniPort	1			1			2	1	1	1	1
+Seurat v5 bridge					1	1	2	1	1	1	1
+StabMap					1	1	2	1	1	1	1
+scMoMaT					1	1	2	1	1	1	0
+SpatialGlue			1				2	1	1	1	0
+MIDAS					1	1	2	1	1	1	1
+MultiMAP			1	1			2	1	1	1	1
+MEFISTO			1				2	1	1	1	1
+scVAEIT					1	1	2	1	1	1	0

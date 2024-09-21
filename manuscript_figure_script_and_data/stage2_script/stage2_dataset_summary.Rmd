@@ -1,0 +1,431 @@
+```{r}
+
+library(pheatmap)
+library(dplyr)
+library(tibble)
+library(ggimage)
+library(RColorBrewer)
+library(plyr)
+
+mytemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(colour = "black"),axis.text.y =element_text(colour = "black"),
+              axis.title.y=element_text(colour = "black"))
+widetemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(angle = 30,size = 12,hjust = 1,colour = "black"),axis.text.y =element_text(size = 12,colour = "black"),
+                axis.title.y=element_text(size=12,colour = "black"),legend.text=element_text(size=12))
+
+basecol<-function(n){
+  colall<-c('#d7191c','#31a354','#756bb1','#0571b0','#d95f0e','#bdbdbd')
+  return(colall[c(1:n)])
+}
+```
+
+1. summarise the basic stat of benchmark datasets
+```{r}
+# hspc是timepoint+batch 10x mouse brain是disease+reps
+# 
+
+metafiles = list.files("../stage2_res/metadata/")
+for (meta in metafiles){
+  if (str_detect(meta,"_metadata.csv")){
+    metadata<-read.csv(paste0("./metadata/",meta),header = T)
+    meta_prefix<-str_sub(meta,end=-14)
+    print(meta_prefix)
+    if ("cell_type" %in% colnames(metadata)){
+      p_tab<-data.frame(table(metadata$cell_type))
+      p_tab$Var1 <- factor(p_tab$Var1, levels = p_tab$Var1[order(p_tab$Freq, decreasing = F)])
+      p<-ggplot(p_tab,aes(y=Var1,x=Freq))+geom_col(position = "dodge",width = 0.6)+mytemp+geom_text(aes(label = Freq), position = position_dodge(width = 0.8), hjust = 0)+xlab("Number of cells") +ylab(NULL)+xlim(c(0,max(p_tab$Freq)*1.05))
+      n_ctype = length(unique(metadata$cell_type))
+      ggsave(p,filename=paste0("./stage2_figs/datasets_summary/",meta_prefix,"_cell_type_freq.pdf"),width=6,height=3+n_ctype/6)
+    }
+    if ("batch" %in% colnames(metadata)){
+      p_tab<-data.frame(table(metadata$batch))
+      p_tab$Var1 <- factor(p_tab$Var1, levels = p_tab$Var1[order(p_tab$Freq, decreasing = F)])
+      p<-ggplot(p_tab,aes(y=Var1,x=Freq))+geom_col(position = "dodge",width = 0.6)+mytemp+geom_text(aes(label = Freq), position = position_dodge(width = 0.8), hjust = 0)+xlab("Number of cells") +ylab(NULL)+xlim(c(0,max(p_tab$Freq)*1.05))
+      n_batch = length(unique(metadata$batch))
+      ggsave(p,filename=paste0("./stage2_figs/datasets_summary/",meta_prefix,"_batch_freq.pdf"),width=6,height=3+n_batch/6,limitsize = FALSE)
+    }
+  }
+}
+
+```
+
+
+2. summarise the quality of datasets
+```{r}
+
+summary_multiome_dataset<-function(rna_file, atac_file, gam_file=NA, prefix="BMMC_Multiome"){
+  rna_tab=readRDS(rna_file)
+  atac_tab=readRDS(atac_file)
+  
+  ncell=dim(rna_tab)[2]
+  ngene=dim(rna_tab)[1]
+  npeak=dim(atac_tab)[1]
+  
+  
+  rna_nzero=1-sum(rna_tab==0)/(as.numeric(ncell)*ngene)
+  atac_nzero=1-sum(atac_tab==0)/(as.numeric(ncell)*npeak)
+  if (!is.na(gam_file)){
+    gam_tab=readRDS(gam_file)
+    ngam=dim(gam_tab)[1]
+    gam_nzero=1-sum(gam_tab==0)/(ncell*ngam)
+  }else{
+    ngam=NA
+    gam_nzero=NA
+  }
+  
+  return(data.frame(name=prefix,ncell=ncell,npeak=npeak,ngene=ngene,ngam=ngam,
+                    rna_nzero=round(rna_nzero,3),atac_nzero=round(atac_nzero,3),gam_nzero=round(gam_nzero,3)))
+}
+
+# BMMC p10
+out_tab<-summary_multiome_dataset(
+  prefix="BMMC_p10",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ATAC/p10/BMMC-multiome-p10-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/BMMC/RNA+ATAC/p10/BMMC-multiome-p10-ATAC-peaks.rds",
+  gam_file="/home/wsg/BM/data/BMMC/RNA+ATAC/p10/BMMC-multiome-p10-ATAC-gam.rds"
+)
+# BMMC s3d10
+out_tmp<-summary_multiome_dataset(
+  prefix="BMMC_s3d10",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ATAC/s3d10/BMMC-multiome-s3d10-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/BMMC/RNA+ATAC/s3d10/BMMC-multiome-s3d10-ATAC-peaks.rds",
+  # gam_file="/home/wsg/BM/data/BMMC/RNA+ATAC/s3d10/BMMC-multiome-s3d10-ATAC-gam.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# HSPC
+out_tmp<-summary_multiome_dataset(
+  prefix="HSPC",
+  rna_file="/home/wsg/BM/data/HSPC/RNA+ATAC/p10/HSPC-multiome-p10-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/HSPC/RNA+ATAC/p10/HSPC-multiome-p10-ATAC-peaks.rds",
+  gam_file="/home/wsg/BM/data/HSPC/RNA+ATAC/p10/HSPC-multiome-p10-ATAC-gam.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# SHARE
+out_tmp<-summary_multiome_dataset(
+  prefix="SHARE_skin",
+  rna_file="/home/wsg/BM/data/SHARE/RNA+ATAC/RawData/SHARE-multiome-raw-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/SHARE/RNA+ATAC/RawData/SHARE-multiome-raw-ATAC-peaks.rds",
+  gam_file="/home/wsg/BM/data/SHARE/RNA+ATAC/RawData/SHARE-multiome-raw-ATAC-gam.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# 10X mouse brain
+out_tmp<-summary_multiome_dataset(
+  prefix="10x_mouse_brain",
+  rna_file="/home/wsg/BM/data/10x_mouse_brain/RNA+ATAC/2p5/brain-multiome-2p5-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/10x_mouse_brain/RNA+ATAC/2p5/brain-multiome-2p5-ATAC-peaks.rds",
+  gam_file="/home/wsg/BM/data/10x_mouse_brain/RNA+ATAC/2p5/brain-multiome-2p5-ATAC-gam.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# 10X PBMC
+out_tmp<-summary_multiome_dataset(
+  prefix="10x_PBMC",
+  rna_file="/home/wsg/BM/data/10x_PBMC/RNA+ATAC/RawData/PBMC-multiome-raw-RNA-counts.rds",
+  atac_file="/home/wsg/BM/data/10x_PBMC/RNA+ATAC/RawData/PBMC-multiome-raw-ATAC-peaks.rds",
+  gam_file="/home/wsg/BM/data/10x_PBMC/RNA+ATAC/RawData/PBMC-multiome-raw-ATAC-gam.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# BMMC robustness
+
+for (robs in c(10,25,50,75)){
+  rob_state<-paste0("p10_R",robs,"_A",robs)
+  # rob_state2<-paste0("R",robs,"_A",robs)
+  mypath=paste0("/home/wsg/BM/data/BMMC/RNA+ATAC/p10_robust/",rob_state,"/")
+    out_tmp<-summary_multiome_dataset(
+    prefix=paste0("BMMC_",rob_state),
+    rna_file=paste0(mypath,"/BMMC-multiome-",rob_state,"-RNA-counts.rds"),
+    atac_file=paste0(mypath,"/BMMC-multiome-",rob_state,"-ATAC-peaks.rds"),
+    gam_file=paste0(mypath,"/BMMC-multiome-",rob_state,"-ATAC-gam.rds")
+    )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+write.table(out_tab,file="../stage2_res/datasets_summary/rna_atac_summary.tsv",sep="\t",row.names = F,col.names = T,quote=F)
+```
+
+
+```{r}
+# RNA+ADT
+summary_cite_dataset<-function(rna_file, adt_file, prefix="BMMC_Multiome"){
+  rna_tab=readRDS(rna_file)
+  adt_tab=readRDS(adt_file)
+  
+  ncell=dim(rna_tab)[2]
+  ngene=dim(rna_tab)[1]
+  nadt=dim(adt_tab)[1]
+  
+  
+  rna_nzero=1-sum(rna_tab==0)/(as.numeric(ncell)*ngene)
+  adt_nzero=1-sum(adt_tab==0)/(as.numeric(ncell)*nadt)
+  
+  return(data.frame(name=prefix,ncell=ncell,nadt=nadt,ngene=ngene,
+                    rna_nzero=round(rna_nzero,3),adt_nzero=round(adt_nzero,3)))
+}
+# BMMC p10
+out_tab<-summary_cite_dataset(
+  prefix="BMMC_p10",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ADT/p10/BMMC-CITE_seq-p10-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/BMMC/RNA+ADT/p10/BMMC-CITE_seq-p10-ADT-counts.rds"
+)
+# BMMC s2d1
+out_tmp<-summary_cite_dataset(
+  prefix="BMMC_s2d1",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1/BMMC-CITE_seq-s2d1-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1/BMMC-CITE_seq-s2d1-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# HSPC 
+out_tmp<-summary_cite_dataset(
+  prefix="HSPC",
+  rna_file="/home/wsg/BM/data/HSPC/RNA+ADT/p10/HSPC-CITE_seq-p10-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/HSPC/RNA+ADT/p10/HSPC-CITE_seq-p10-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# SPATIAL lymph node 
+out_tmp<-summary_cite_dataset(
+  prefix="SPATIAL_lymph_node",
+  rna_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/lymph_node/lymph_node-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/lymph_node/lymph_node-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# SPATIAL spleen
+out_tmp<-summary_cite_dataset(
+  prefix="SPATIAL_spleen",
+  rna_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/spleen/spleen-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/spleen/spleen-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+# SPATIAL thymus
+out_tmp<-summary_cite_dataset(
+  prefix="SPATIAL_thymus",
+  rna_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/thymus/thymus-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/SPATIAL/RNA+ADT/thymus/thymus-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# WBC
+out_tmp<-summary_cite_dataset(
+  prefix="WBC",
+  rna_file="/home/wsg/BM/data/WBC/RNA+ADT/RawData/HWBC-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/WBC/RNA+ADT/RawData/HWBC-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# 10x_NSCLC
+out_tmp<-summary_cite_dataset(
+  prefix="10x_NSCLC",
+  rna_file="/home/wsg/BM/data/10x_NSCLC/RNA+ADT/RawData/NSCLC-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/10x_NSCLC/RNA+ADT/RawData/NSCLC-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# COVID19
+out_tmp<-summary_cite_dataset(
+  prefix="COVID19",
+  rna_file="/home/wsg/BM/data/COVID19/RNA+ADT/RawData/COVID19-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/COVID19/RNA+ADT/RawData/COVID19-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+
+# 10x_kidney_cancer
+out_tmp<-summary_cite_dataset(
+  prefix="10x_kidney_cancer",
+  rna_file="/home/wsg/BM/data/10x_kidney_cancer/RNA+ADT/RawData/kidney-CITE_seq-raw-RNA-counts.rds",
+  adt_file="/home/wsg/BM/data/10x_kidney_cancer/RNA+ADT/RawData/kidney-CITE_seq-raw-ADT-counts.rds"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+
+
+# BMMC robustness
+
+for (robs in c(10,25,50,75)){
+  rob_state<-paste0("p10_R",robs,"_A",robs)
+  # rob_state2<-paste0("R",robs,"_A",robs)
+  mypath=paste0("/home/wsg/BM/data/BMMC/RNA+ADT/p10_robust/",rob_state,"/")
+    out_tmp<-summary_cite_dataset(
+    prefix=paste0("BMMC_CITE_",rob_state),
+    rna_file=paste0(mypath,"/BMMC-CITE_seq-",rob_state,"-RNA-counts.rds"),
+    adt_file=paste0(mypath,"/BMMC-CITE_seq-",rob_state,"-ADT-counts.rds")
+    )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+
+write.table(out_tab,file="../stage2_res/datasets_summary/rna_adt_summary.tsv",sep="\t",row.names = F,col.names = T,quote=F)
+```
+
+
+```{r}
+
+
+summary_mosaic_dataset<-function(rna_file, mod2_file, cell_meta,grp1, grp2, prefix="BMMC_CITE_s1d1_s3d6"){
+  rna_tab=readRDS(rna_file)
+  mod2_tab=readRDS(mod2_file)
+  metadata<-read.csv(cell_meta)
+  paired_cells<-subset(metadata, batch==grp1)$barcode
+  unpaired_cells<-subset(metadata, batch==grp2)$barcode
+  ncell1=length(paired_cells)
+  ncell2=length(unpaired_cells)
+  ngene=dim(rna_tab)[1]
+  nmod2=dim(mod2_tab)[1]
+  rna_tab_pair = rna_tab[,paired_cells]
+  rna_tab_unpair = rna_tab[,unpaired_cells]
+  
+  mod2_tab_pair = mod2_tab[,paired_cells]
+  mod2_tab_unpair = mod2_tab[,unpaired_cells]
+  
+  rna_pair_nzero=1-sum(rna_tab_pair==0)/(as.numeric(ncell1)*ngene)
+  mod2_pair_nzero=1-sum(mod2_tab_pair==0)/(as.numeric(ncell1)*nmod2)
+  rna_unpair_nzero=1-sum(rna_tab_unpair==0)/(as.numeric(ncell2)*ngene)
+  mod2_unpair_nzero=1-sum(mod2_tab_unpair==0)/(as.numeric(ncell2)*nmod2)
+  
+  return(data.frame(name=prefix,ncell=paste0(ncell1,",",ncell2),nmod2=nmod2,ngene=ngene,
+                    rna_nzero=paste0(round(rna_pair_nzero,3),",",round(rna_unpair_nzero,3)),
+                    mod2_nzero=paste0(round(mod2_pair_nzero,3),",",round(mod2_unpair_nzero,3)))
+         )
+}
+
+summary_mosaic_dataset2<-function(rna_file, mod2_file, cell_meta,grp1, grp2, prefix="BMMC_CITE_s1d1_s3d6"){
+  rna_tab=readRDS(rna_file)
+  mod2_tab=readRDS(mod2_file)
+  metadata<-read.csv(cell_meta)
+  paired_cells<-subset(metadata, data_size==grp1)$barcode
+  unpaired_cells<-subset(metadata, data_size==grp2)$barcode
+  ncell1=length(paired_cells)
+  ncell2=length(unpaired_cells)
+  ngene=dim(rna_tab)[1]
+  nmod2=dim(mod2_tab)[1]
+  rna_tab_pair = rna_tab[,paired_cells]
+  rna_tab_unpair = rna_tab[,unpaired_cells]
+  
+  mod2_tab_pair = mod2_tab[,paired_cells]
+  mod2_tab_unpair = mod2_tab[,unpaired_cells]
+  
+  rna_pair_nzero=1-sum(rna_tab_pair==0)/(as.numeric(ncell1)*ngene)
+  mod2_pair_nzero=1-sum(mod2_tab_pair==0)/(as.numeric(ncell1)*nmod2)
+  rna_unpair_nzero=1-sum(rna_tab_unpair==0)/(as.numeric(ncell2)*ngene)
+  mod2_unpair_nzero=1-sum(mod2_tab_unpair==0)/(as.numeric(ncell2)*nmod2)
+  
+  return(data.frame(name=prefix,ncell=paste0(ncell1,",",ncell2),nmod2=nmod2,ngene=ngene,
+                    rna_nzero=paste0(round(rna_pair_nzero,3),",",round(rna_unpair_nzero,3)),
+                    mod2_nzero=paste0(round(mod2_pair_nzero,3),",",round(mod2_unpair_nzero,3)))
+         )
+}
+
+out_tab<-summary_mosaic_dataset(
+  prefix="BMMC-CITE-s2d1_s3d6",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6/BMMC-CITE_seq-s2d1_s3d6-RNA-counts.rds",
+  mod2_file="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6/BMMC-CITE_seq-s2d1_s3d6-ADT-counts.rds",
+  cell_meta="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6/metadata.csv",
+  grp1="s3d6",grp2="s2d1"
+)
+# cell_meta<-read.csv("/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6/metadata.csv")
+
+out_tmp<-summary_mosaic_dataset(
+  prefix="BMMC-Multiome-s1d1_s3d10",
+  rna_file="/home/wsg/BM/data/BMMC/RNA+ATAC/s1d1_s3d10/BMMC-multiome-s1d1_s3d10-RNA-counts.rds",
+  mod2_file="/home/wsg/BM/data/BMMC/RNA+ATAC/s1d1_s3d10/BMMC-multiome-s1d1_s3d10-ATAC-peaks.rds",
+  cell_meta="/home/wsg/BM/data/BMMC/RNA+ATAC/s1d1_s3d10/metadata.csv",
+  grp1="s1d1",grp2="s3d10"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+out_tmp<-summary_mosaic_dataset2(
+  prefix="SHARE-Multiome-c5k_c5k",
+  rna_file="/home/wsg/BM/data/SHARE/RNA+ATAC/c5k_c5k/SHARE-multiome-c5k_c5k-RNA-counts.rds",
+  mod2_file="/home/wsg/BM/data/SHARE/RNA+ATAC/c5k_c5k/SHARE-multiome-c5k_c5k-ATAC-peaks.rds",
+  cell_meta="/home/wsg/BM/data/SHARE/RNA+ATAC/c5k_c5k/metadata.csv",
+  grp1="c5k_2",grp2="c5k_1"
+)
+out_tab<-rbind(out_tab,out_tmp)
+
+# 把数据量的梯度也输出
+for (data_size in c("c3k","c5k","c10k","c20k")){
+  rob_state=paste0('c5k_',data_size)
+  out_tmp<-summary_mosaic_dataset2(
+    prefix=paste0("SHARE-Multiome-c5k_",data_size),
+    rna_file=paste0("/home/wsg/BM/data/SHARE/RNA+ATAC/",rob_state,"/SHARE-multiome-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0("/home/wsg/BM/data/SHARE/RNA+ATAC/",rob_state,"/SHARE-multiome-",rob_state,"-ATAC-peaks.rds"),
+    cell_meta=paste0("/home/wsg/BM/data/SHARE/RNA+ATAC/",rob_state,"/metadata.csv"),
+    grp1=data_size,grp2="c5k"
+  )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+for (data_size in c("c3k","c5k","c10k","c20k")){
+  rob_state=paste0('c5k_',data_size)
+  out_tmp<-summary_mosaic_dataset2(
+    prefix=paste0("BMMC-Multiome-c5k_",data_size),
+    rna_file=paste0("/home/wsg/BM/data/BMMC/RNA+ATAC/",rob_state,"/BMMC-multiome-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0("/home/wsg/BM/data/BMMC/RNA+ATAC/",rob_state,"/BMMC-multiome-",rob_state,"-ATAC-peaks.rds"),
+    cell_meta=paste0("/home/wsg/BM/data/BMMC/RNA+ATAC/",rob_state,"/metadata.csv"),
+    grp1=data_size,grp2="c5k"
+  )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+
+for (data_size in c("c3k","c5k","c10k","c20k")){
+  rob_state=paste0('c5k_',data_size)
+  out_tmp<-summary_mosaic_dataset2(
+    prefix=paste0("BMMC-CITE_seq-c5k_",data_size),
+    rna_file=paste0("/home/wsg/BM/data/BMMC/RNA+ADT/",rob_state,"/BMMC-CITE_seq-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0("/home/wsg/BM/data/BMMC/RNA+ADT/",rob_state,"/BMMC-CITE_seq-",rob_state,"-ADT-counts.rds"),
+    cell_meta=paste0("/home/wsg/BM/data/BMMC/RNA+ADT/",rob_state,"/metadata.csv"),
+    grp1=data_size,grp2="c5k"
+  )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+for (robs in c(10,25,50,75)){
+  rob_state<-paste0("s1d1_R",robs,"_A",robs,"_s3d10_R",robs,"_A",robs)
+  # rob_state2<-paste0("R",robs,"_A",robs)
+  mypath=paste0("/home/wsg/BM/data/BMMC/RNA+ATAC/s1d1_s3d10_robust/",rob_state,"/")
+    out_tmp<-summary_mosaic_dataset(
+    prefix=paste0("BMMC-Multiome-",rob_state),
+    rna_file=paste0(mypath,"/BMMC-multiome-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0(mypath,"/BMMC-multiome-",rob_state,"-ATAC-peaks.rds"),
+    cell_meta="/home/wsg/BM/data/BMMC/RNA+ATAC/s1d1_s3d10/metadata.csv",
+    grp1="s1d1",grp2="s3d10"
+    )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+
+for (robs in c(10,25,50,75)){
+  rob_state<-paste0("c5k_R",robs,"_A",robs,"_c5k")
+  # rob_state2<-paste0("R",robs,"_A",robs)
+  mypath=paste0("/home/wsg/BM/data/SHARE/RNA+ATAC/c5k_c5k_robust/",rob_state,"/")
+    out_tmp<-summary_mosaic_dataset2(
+    prefix=paste0("SHARE-seq skin",rob_state),
+    rna_file=paste0(mypath,"/SHARE-multiome-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0(mypath,"/SHARE-multiome-",rob_state,"-ATAC-peaks.rds"),
+    cell_meta="/home/wsg/BM/data/SHARE/RNA+ATAC/c5k_c5k/metadata.csv",
+    grp1="c5k_1",grp2="c5k_2"
+    )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+for (robs in c(10,25,50,75)){
+  rob_state<-paste0("s2d1_R",robs,"_A",robs,"_s3d6_R",robs,"_A",robs)
+  # rob_state2<-paste0("R",robs,"_A",robs)
+  mypath=paste0("/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6_robust/",rob_state,"/")
+  out_tmp<-summary_mosaic_dataset(
+    prefix=paste0("BMMC-CITE-",rob_state),
+    rna_file=paste0(mypath,"/BMMC-CITE_seq-",rob_state,"-RNA-counts.rds"),
+    mod2_file=paste0(mypath,"/BMMC-CITE_seq-",rob_state,"-ADT-counts.rds"),
+    cell_meta="/home/wsg/BM/data/BMMC/RNA+ADT/s2d1_s3d6/metadata.csv",
+    grp1="s3d6",grp2="s2d1"
+  )
+  out_tab<-rbind(out_tab,out_tmp)
+}
+
+write.table(out_tab,file="../stage2_res/datasets_summary/mosaic_summary_all.tsv",sep="\t",row.names = F,col.names = T,quote=F)
+# c5k_cnk datasets summarized as one line in extended data tables.
+```
+
+
+

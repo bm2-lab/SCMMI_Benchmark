@@ -1,0 +1,10 @@
+,method,Output,nCell,Batch_ASW_batch,graph_iLISI
+0,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node/rep_1/run_harmony/harmony,Embedding,6843.0,0.9607397890795096,0.9396189203676728
+1,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node/rep_1/run_mefisto/mefisto,Embedding,6843.0,0.8675711904859582,0.4650027104959724
+2,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node/rep_1/run_multimap/multimap,Embedding,6843.0,0.8283117321261865,0.2357113424798083
+3,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node/rep_1/run_spglue/spglue,Embedding,6843.0,0.9290421027237524,0.724624927980156
+4,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node/rep_1/run_staligner/staligner,Embedding,6843.0,0.9342368671109216,0.8633451951311728
+5,spglue,Embedding,6843.0,0.9290421027237524,0.724624927980156
+6,spglue,Embedding,6843.0,0.9290421027237524,0.724624927980156
+7,spglue,Embedding,6843.0,0.9290421027237524,0.724624927980156
+8,spglue,Embedding,6843.0,0.9290421027237524,0.724624927980156

@@ -1,0 +1,930 @@
+```{r}
+
+library(pheatmap)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(RColorBrewer)
+library(reshape2)
+library(tidyverse)
+library(ggsci)
+library(lubridate)
+library(cowplot)
+
+source("../plot_scmmib_table.r")
+
+mytemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(colour = "black"),axis.text.y =element_text(colour = "black"),
+              axis.title.y=element_text(colour = "black"))
+
+widetemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(angle = 30,size = 12,hjust = 1,colour = "black"),axis.text.y =element_text(size = 12,colour = "black"),
+                axis.title.y=element_text(size=12,colour = "black"),legend.text=element_text(size=12))
+
+rect_temp<-theme_bw()+theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.minor = element_blank(), panel.grid.major =element_blank(),axis.text.y =element_text(colour = "black"), axis.title.y=element_text(colour = "black"))
+
+basecol<-function(n){
+  colall<-c('#d7191c','#31a354','#756bb1','#0571b0','#d95f0e','#bdbdbd')
+  return(colall[c(1:n)])
+}
+```
+
+# 1. merge scalability metrics for plotting
+```{r}
+
+pair_time<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+scATAC_time_tab.txt",sep = "\t",header=T)
+pair_mem<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+scATAC_mem_tab.txt",sep = "\t",header=T)
+pair_gpu<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+scATAC_gpu_tab.txt",sep = "\t",header=T)
+
+cite_time<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+ADT_time_tab.txt",sep = "\t",header=T)
+cite_mem<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+ADT_mem_tab.txt",sep = "\t",header=T)
+cite_gpu<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/scRNA+ADT_gpu_tab.txt",sep = "\t",header=T)
+
+unpair_time<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/diagonal_scRNA+scATAC_time_tab.txt",sep = "\t",header=T)
+unpair_mem<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/diagonal_scRNA+scATAC_mem_tab.txt",sep = "\t",header=T)
+unpair_gpu<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/diagonal_scRNA+scATAC_gpu_tab.txt",sep = "\t",header=T)
+
+
+pair_time_long<- pair_time %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "time"
+) %>% as.data.frame()
+rownames(pair_time_long)<-paste(pair_time_long[,1],pair_time_long[,2],sep=":")
+
+pair_mem_long<- pair_mem %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "mem"
+)%>% as.data.frame()
+rownames(pair_mem_long)<-paste(pair_mem_long[,1],pair_mem_long[,2],sep=":")
+
+pair_gpu_long<- pair_gpu %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "gpu"
+) %>% as.data.frame()
+rownames(pair_gpu_long)<-paste(pair_gpu_long[,1],pair_gpu_long[,2],sep=":")
+
+pair_scal<-pair_time_long
+pair_scal$mem<-pair_mem_long$mem
+pair_scal$GPU<-NA
+pair_scal[rownames(pair_gpu_long),"GPU"]<-pair_gpu_long$gpu
+
+pair_scal$data_size<-plyr::mapvalues(pair_scal$label,from=c("c500","c1k","c5k","c10k","c50k","c100k","c500k"),
+                                to=c(500,1000,5000,10000,50000,100000,500000))
+
+
+write.table(pair_scal,file = "../stage2_res/SCMMIB_metrics_final/usability_results/pair_rna_atac_summary.txt",sep='\t',quote=F,row.names = F,col.names = T)
+
+
+unpair_time_long<- unpair_time %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "time"
+) %>% as.data.frame()
+rownames(unpair_time_long)<-paste(unpair_time_long[,1],unpair_time_long[,2],sep=":")
+
+unpair_mem_long<- unpair_mem %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "mem"
+)%>% as.data.frame()
+rownames(unpair_mem_long)<-paste(unpair_mem_long[,1],unpair_mem_long[,2],sep=":")
+
+unpair_gpu_long<- unpair_gpu %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "gpu"
+) %>% as.data.frame()
+rownames(unpair_gpu_long)<-paste(unpair_gpu_long[,1],unpair_gpu_long[,2],sep=":")
+
+unpair_scal<-unpair_time_long
+unpair_scal$mem<-unpair_mem_long$mem
+unpair_scal$GPU<-NA
+unpair_scal[rownames(unpair_gpu_long),"GPU"]<-unpair_gpu_long$gpu
+
+unpair_scal$data_size<-plyr::mapvalues(unpair_scal$label,from=c("c500","c1k","c5k","c10k","c50k","c100k","c500k"),
+                                to=c(500,1000,5000,10000,50000,100000,500000))
+
+write.table(unpair_scal,file = "../stage2_res/SCMMIB_metrics_final/usability_results/unpair_rna_atac_summary.txt",sep='\t',quote=F,row.names = F,col.names = T)
+
+
+cite_time_long<- cite_time %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "time"
+) %>% as.data.frame()
+rownames(cite_time_long)<-paste(cite_time_long[,1],cite_time_long[,2],sep=":")
+
+cite_mem_long<- cite_mem %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "mem"
+)%>% as.data.frame()
+rownames(cite_mem_long)<-paste(cite_mem_long[,1],cite_mem_long[,2],sep=":")
+
+cite_gpu_long<- cite_gpu %>% pivot_longer(
+    cols = -V1,
+    names_to = "label",
+    values_to = "gpu"
+) %>% as.data.frame()
+rownames(cite_gpu_long)<-paste(cite_gpu_long[,1],cite_gpu_long[,2],sep=":")
+
+cite_scal<-cite_time_long
+cite_scal$mem<-cite_mem_long$mem
+cite_scal$GPU<-NA
+cite_scal[rownames(cite_gpu_long),"GPU"]<-cite_gpu_long$gpu
+
+cite_scal$data_size<-plyr::mapvalues(cite_scal$label,from=c("c500","c1k","c5k","c10k","c50k","c100k","c500k"),
+                                to=c(500,1000,5000,10000,50000,100000,500000))
+
+write.table(cite_scal,file = "../stage2_res/SCMMIB_metrics_final/usability_results/pair_rna_adt_summary.txt",sep='\t',quote=F,row.names = F,col.names = T)
+```
+
+
+
+2. Benchmark algorithm scalability visualization by line plots
+```{r}
+library(ggsci)
+mypal <- pal_d3(palette = "category20", alpha = 1)(14)
+# mypal
+library(scales)
+show_col(mypal)
+
+reformat_hms<-function(in_time){
+  in_time2<-str_split(in_time,pattern = ":",simplify = T)
+  if (dim(in_time2)[2]==2){
+    sec = round(as.numeric(in_time2[1,2]))
+    out_time = paste("0",in_time2[1,1],sec,sep=":")
+  }else{
+    out_time = in_time
+  }
+  return(out_time)
+}
+
+mosaic_rna_adt_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/mosaic_rna_adt_summary.txt",sep = "\t",header = T)
+mosaic_rna_atac_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/mosaic_rna_atac_summary.txt",sep = "\t",header = T)
+pair_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/pair_rna_atac_summary.txt",sep='\t',header = T)
+unpair_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/unpair_rna_atac_summary.txt",sep='\t',header = T)
+cite_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/pair_rna_adt_summary.txt",sep='\t',header = T)
+gam_scal<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/GAM_prepare_summary.txt",sep='\t',header = F)
+colnames(gam_scal)<-c("method","label","mem","time")
+
+gpu_tools <- c("unionCom","cobolt","DCCA","GLUE","scDEC","scMM","scMVAE","totalVI","Multigrate","SCALEX","sciPENN","scMDC","scMVP","uniPort","scVAEIT","DeepMAPS","MultiVI","scMoMaT","SpatialGlue","MIDAS")
+cpu_tools <- c("LIGER iNMF","Seurat v3 CCA","Seurat v4 RPCA","CiteFuse","MOFA+","scAI","LIGER online iNMF","Seurat v4 WNN","MultiMAP","bindSC","LIGER UINMF","Pamona","MEFISTO","MaxFuse","SIMBA","Seurat v5 bridge","StabMap")
+
+# plot gam line plot
+gam_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(gam_scal$time, reformat_hms))))
+gam_scal$data_size<-plyr::mapvalues(gam_scal$label,from=c("c500","c1k","c5k","c10k","c50k","c100k","c500k"),
+                                to=c(500,1000,5000,10000,50000,100000,500000))
+
+
+gam_scal<-subset(gam_scal,label!='c500k') # NA for both functions.
+
+p1<-ggplot(gam_scal, aes(x=as.numeric(data_size),y=as.numeric(time_s),color=method))+
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c( 60, 3600, 7200),
+                labels = c( "1 min", "1 h", "2 h"),
+                limits = c(60,7200) 
+                ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+                ) +
+  scale_color_manual(values = basecol(2),
+                      guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1)))+ 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  rect_temp +theme(legend.position = "none")
+
+gam_scal$mem_g<-as.numeric(str_split(gam_scal$mem,pattern="GB",simplify = T)[,1])
+p2 <- ggplot(gam_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g), colour=method)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c(1, 10, 100, 200),
+                labels = c("1 GB", "10 GB", "100 GB", "200 GB"),
+                limits = c(1,200)
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = basecol(2),
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + 
+  labs(x = "Dataset size (number of cells)", y = "Memory") +rect_temp
+p1 <- p1 + ggtitle("GAM time")
+p2 <- p2 + ggtitle("GAM memory")
+
+
+combined_plot <- plot_grid(p1, p2, ncol = 2, rel_widths = c(1,1.6))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/gam_scal_line.pdf",width=11,height=4.5)
+
+
+## plot pair rna+atac scalability line plots.
+pair_scal$hardware <- ""
+pair_scal[rownames(subset(pair_scal,V1 %in% gpu_tools)),"hardware"] <- "GPU" 
+pair_scal[rownames(subset(pair_scal,V1 %in% cpu_tools)),"hardware"]<- "CPU" 
+
+pair_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(pair_scal$time,reformat_hms))))
+pair_scal$mem_g<-as.numeric(str_split(pair_scal$mem,pattern="GB",simplify = T)[,1])
+pair_scal$gam_time_s<-0
+pair_scal$gam_mem_g<-0
+
+# scMVAE use GAM as input
+for (soft in c("scMVAE")){
+  for (size in c(500,1000,5000,10000)){
+    pair_scal[rownames(subset(pair_scal,V1==soft & data_size==size)),'gam_time_s']<- subset(gam_scal,method=="GeneActivity" & data_size==size)[,'time_s']
+    pair_scal[rownames(subset(pair_scal,V1==soft & data_size==size)),'gam_mem_g']<- subset(gam_scal,method=="GeneActivity" & data_size==size)[,'mem_g']
+    # pair_scal$V1<- plyr::mapvalues(pair_scal$V1, from=soft,to=paste0(soft," (GAM)"))
+  }
+}
+
+p1 <- ggplot(pair_scal, aes(x=as.numeric(data_size), y=as.numeric(time_s+gam_time_s), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c(1, 60, 3600, 86400),
+                labels = c("1 s", "1 min", "1 h", "24 h"),
+                expand = expansion(mult = c(0.01, 0.1)) 
+                ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),             
+        panel.grid.minor = element_blank()              
+        ) 
+
+p2 <- ggplot(pair_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g+gam_mem_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  # ylim(0, 100000) + 
+  scale_y_log10(breaks = c(1, 10, 100, 500),
+                labels = c("1 GB", "10 GB", "100 GB", "500 GB"),
+                expand = expansion(mult = c(0.1, 0.2))
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + 
+  labs(x = "Dataset size (number of cells)", y = "Memory") + 
+  theme(legend.position = "none", 
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p2
+
+pair_scal$gpu_g<-as.numeric(str_split(pair_scal$GPU,pattern="MB",simplify = T)[,1])/1024
+
+p3 <- ggplot(pair_scal, aes(x=as.numeric(data_size), y=as.numeric(gpu_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 24),
+                     labels = c("0 GB", "5 GB", "10 GB", "15 GB", "24 GB"),
+                     limits = c(0,24)
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + 
+  labs(x = "Dataset size (number of cells)", y = "GPU") + 
+  theme(legend.background = element_blank(),  
+        legend.key = element_blank(),         
+        legend.title = element_blank(),       
+        panel.background =  element_rect(fill = "white", colour = "black"),
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()             
+  ) 
+
+p1 <- p1 + ggtitle("paired scRNA+scATAC time")
+p2 <- p2 + ggtitle("paired scRNA+scATAC memory")
+p3 <- p3 + ggtitle("paired scRNA+scATAC GPU")
+
+
+combined_plot <- plot_grid(p1, p2, p3, ncol = 3, rel_widths = c(1,1,1.25))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/pair_scal_line.pdf",width=18,height=6)
+
+
+## Then unpair scalablity plots.
+unpair_scal$hardware <- ""
+unpair_scal[rownames(subset(unpair_scal,V1 %in% gpu_tools)),"hardware"] <- "GPU" 
+unpair_scal[rownames(subset(unpair_scal,V1 %in% cpu_tools)),"hardware"]<- "CPU" 
+
+unpair_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(unpair_scal$time,reformat_hms))))
+unpair_scal$mem_g<-as.numeric(str_split(unpair_scal$mem,pattern="GB",simplify = T)[,1])
+unpair_scal$gam_time_s=0
+unpair_scal$gam_mem_g=0
+# add GAM usage
+for (soft in c("bindSC","LIGER iNMF","LIGER online iNMF","LIGER UINMF","MaxFuse","SCALEX","Seurat v3 CCA","Seurat v4 RPCA","uniPort")){
+  for (size in c(500,1000,5000,10000,50000,100000)){
+    unpair_scal[rownames(subset(unpair_scal,V1==soft & data_size==size)),'gam_time_s']<- subset(gam_scal,method=="GeneActivity" & data_size==size)[,'time_s']
+    unpair_scal[rownames(subset(unpair_scal,V1==soft & data_size==size)),'gam_mem_g']<- subset(gam_scal,method=="GeneActivity" & data_size==size)[,'mem_g']
+    # unpair_scal$V1<- plyr::mapvalues(unpair_scal$V1, from=soft,to=paste0(soft," (GAM)"))
+  }
+}
+p1 <- ggplot(unpair_scal, aes(x=as.numeric(data_size), y=as.numeric(time_s+gam_time_s), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c(1, 60, 3600, 86400),
+                labels = c("1 s", "1 min", "1 h", "24 h"),
+                limits = c(10,86400)
+                ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific,
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  # theme(legend.text = element_text(size=12, color="red"))
+  theme(legend.position = "none", 
+        panel.background =  element_rect(fill = "white", colour = "black"),
+        panel.grid.major = element_blank(),             
+        panel.grid.minor = element_blank()              
+        ) 
+
+
+p2 <- ggplot(unpair_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g+gam_mem_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  # ylim(0, 100000) + 
+  scale_y_log10(breaks = c(1, 10, 100, 500),
+                labels = c("1 GB", "10 GB", "100 GB", "500 GB"),
+                expand = expansion(mult = c(0.1, 0.2)) 
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Memory") + 
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p2
+
+unpair_scal$gpu_g<-as.numeric(str_split(unpair_scal$GPU,pattern="MB",simplify = T)[,1])/1024
+
+p3 <- ggplot(unpair_scal, aes(x=as.numeric(data_size), y=as.numeric(gpu_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 24),
+                     labels = c("0 GB", "5 GB", "10 GB", "15 GB", "24 GB"),
+                     limits = c(0,24)
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "GPU") + 
+  theme(legend.background = element_blank(),  
+        legend.key = element_blank(),         
+        legend.title = element_blank(),       
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p3
+p1 <- p1 + ggtitle("diagonal scRNA+scATAC time")
+p2 <- p2 + ggtitle("diagonal scRNA+scATAC memory")
+p3 <- p3 + ggtitle("diagonal scRNA+scATAC GPU")
+
+
+combined_plot <- plot_grid(p1, p2, p3, ncol = 3, rel_widths = c(1,1,1.25))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/unpair_scal_line.pdf",width=18,height=6)
+
+
+## The cite.
+cite_scal$hardware <- ""
+cite_scal[rownames(subset(cite_scal,V1 %in% gpu_tools)),"hardware"] <- "GPU" 
+cite_scal[rownames(subset(cite_scal,V1 %in% cpu_tools)),"hardware"]<- "CPU" 
+
+cite_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(cite_scal$time,reformat_hms))))
+p1 <- ggplot(cite_scal, aes(x=as.numeric(data_size), y=as.numeric(time_s), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c(1, 60, 3600, 86400),
+                labels = c("1 s", "1 min", "1 h", "24 h"),
+                expand = expansion(mult = c(0.01, 0.1)) 
+                ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  # theme(legend.text = element_text(size=12, color="red"))
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+        ) 
+
+## memory
+cite_scal$mem_g<-as.numeric(str_split(cite_scal$mem,pattern="GB",simplify = T)[,1])
+p2 <- ggplot(cite_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  # ylim(0, 100000) + 
+  scale_y_log10(breaks = c(1, 10, 100, 500),
+                labels = c("1 GB", "10 GB", "100 GB", "500 GB"),
+                expand = expansion(mult = c(0.1, 0.2)) 
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Memory") + 
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p2
+
+cite_scal$gpu_g<-as.numeric(str_split(cite_scal$GPU,pattern="MB",simplify = T)[,1])/1024
+
+p3 <- ggplot(cite_scal, aes(x=as.numeric(data_size), y=as.numeric(gpu_g), colour=V1,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 24),
+                     labels = c("0 GB", "5 GB", "10 GB", "15 GB", "24 GB"),
+                     limits = c(0,24)
+  ) +
+  scale_x_log10(breaks = c(500, 1000, 5000, 10000, 50000, 100000, 500000),
+                labels = scales::scientific, 
+  ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "GPU") + 
+  theme(legend.background = element_blank(),  
+        legend.key = element_blank(),         
+        legend.title = element_blank(),       
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p3
+p1 <- p1 + ggtitle("paired scRNA+ADT time")
+p2 <- p2 + ggtitle("paired scRNA+ADT memory")
+p3 <- p3 + ggtitle("paired scRNA+ADT GPU")
+
+
+combined_plot <- plot_grid(p1, p2, p3, ncol = 3, rel_widths = c(1,1,1.25))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/cite_scal_line.pdf",width=18,height=6)
+
+
+## Then mosaic_rna_atac.
+mosaic_rna_atac_scal$hardware <- ""
+mosaic_rna_atac_scal[rownames(subset(mosaic_rna_atac_scal,soft %in% gpu_tools)),"hardware"] <- "GPU" 
+mosaic_rna_atac_scal[rownames(subset(mosaic_rna_atac_scal,soft %in% cpu_tools)),"hardware"]<- "CPU" 
+
+mosaic_rna_atac_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(mosaic_rna_atac_scal$time,reformat_hms))))
+p1 <- ggplot(mosaic_rna_atac_scal, aes(x=as.numeric(data_size), y=as.numeric(time_s), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c(1, 60, 3600, 86400),
+                labels = c("1 s", "1 min", "1 h", "24 h"),
+                expand = expansion(mult = c(0.01, 0.1)) 
+                ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  # theme(legend.text = element_text(size=12, color="red"))
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+        ) 
+#p1
+
+mosaic_rna_atac_scal$mem_g<-as.numeric(str_split(mosaic_rna_atac_scal$mem,pattern="GB",simplify = T)[,1])
+p2 <- ggplot(mosaic_rna_atac_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  # ylim(0, 100000) + 
+  scale_y_log10(breaks = c(1, 10, 100, 500),
+                labels = c("1 GB", "10 GB", "100 GB", "500 GB"),
+                expand = expansion(mult = c(0.1, 0.2)) 
+  ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Memory") + 
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p2
+
+mosaic_rna_atac_scal$gpu_g<-as.numeric(str_split(mosaic_rna_atac_scal$GPU,pattern="MB",simplify = T)[,1])/1024
+
+p3 <- ggplot(mosaic_rna_atac_scal, aes(x=as.numeric(data_size), y=as.numeric(gpu_g), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 24),
+                     labels = c("0 GB", "5 GB", "10 GB", "15 GB", "24 GB"),
+                     limits = c(0,24)
+  ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "GPU") + 
+  theme(legend.background = element_blank(),  
+        legend.key = element_blank(),         
+        legend.title = element_blank(),       
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p3
+p1 <- p1 + ggtitle("mosaic scRNA+scATAC time")
+p2 <- p2 + ggtitle("mosaic scRNA+scATAC memory")
+p3 <- p3 + ggtitle("mosaic scRNA+scATAC GPU")
+
+
+combined_plot <- plot_grid(p1, p2, p3, ncol = 3, rel_widths = c(1,1,1.25))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/mosaic_rna_atac_scal_line.pdf",width=18,height=6)
+
+
+
+## Then mosaic_rna_adt.
+mosaic_rna_adt_scal$hardware <- ""
+mosaic_rna_adt_scal[rownames(subset(mosaic_rna_adt_scal,soft %in% gpu_tools)),"hardware"] <- "GPU" 
+mosaic_rna_adt_scal[rownames(subset(mosaic_rna_adt_scal,soft %in% cpu_tools)),"hardware"]<- "CPU" 
+
+mosaic_rna_adt_scal$time_s<-period_to_seconds(hms(do.call(rbind, lapply(mosaic_rna_adt_scal$time,reformat_hms))))
+p1 <- ggplot(mosaic_rna_adt_scal, aes(x=as.numeric(data_size), y=as.numeric(time_s), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10(breaks = c( 60, 3600,18000, 36000),
+                labels = c( "1 min", "1 h","5 h", "10 h"),
+                expand = expansion(mult = c(0.01, 0.1)) 
+                ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Time") + 
+  # theme(legend.text = element_text(size=12, color="red"))
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+        ) 
+#p1
+mosaic_rna_adt_scal$mem_g<-as.numeric(str_split(mosaic_rna_adt_scal$mem,pattern="GB",simplify = T)[,1])
+p2 <- ggplot(mosaic_rna_adt_scal, aes(x=as.numeric(data_size), y=as.numeric(mem_g), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  # ylim(0, 100000) + 
+  scale_y_log10(breaks = c(1, 10, 100, 500),
+                labels = c("1 GB", "10 GB", "100 GB", "500 GB"),
+                expand = expansion(mult = c(0.1, 0.2)) 
+  ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "Memory") + 
+  theme(legend.position = "none",  
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p2
+
+mosaic_rna_adt_scal$gpu_g<-as.numeric(str_split(mosaic_rna_adt_scal$GPU,pattern="MB",simplify = T)[,1])/1024
+
+p3 <- ggplot(mosaic_rna_adt_scal, aes(x=as.numeric(data_size), y=as.numeric(gpu_g), colour=soft,linetype=hardware)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 24),
+                     labels = c("0 GB", "5 GB", "10 GB", "15 GB", "24 GB"),
+                     limits = c(0,24)
+  ) +
+  scale_x_log10(breaks = c(3000, 15000, 30000, 60000),
+                labels = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k")
+                ) +
+  scale_color_manual(values = mypal,
+                     guide = guide_legend(override.aes = list(shape=19, size = 4, alpha = 1))) + # 
+  labs(x = "Dataset size (number of cells)", y = "GPU") + 
+  theme(legend.background = element_blank(),  
+        legend.key = element_blank(),         
+        legend.title = element_blank(),       
+        panel.background =  element_rect(fill = "white", colour = "black"), 
+        panel.grid.major = element_blank(),              
+        panel.grid.minor = element_blank()               
+  ) 
+#p3
+p1 <- p1 + ggtitle("mosaic scRNA+ADT time")
+p2 <- p2 + ggtitle("mosaic scRNA+ADT memory")
+p3 <- p3 + ggtitle("mosaic scRNA+ADT GPU")
+
+
+combined_plot <- plot_grid(p1, p2, p3, ncol = 3, rel_widths = c(1,1,1.25))
+ggplot2::ggsave(combined_plot,filename="../stage2_figs/metric_summary/scalability_plot/mosaic_rna_adt_scal_line.pdf",width=18,height=6)
+```
+
+
+
+3. Benchmark algorithms usability ranking and visualization.
+```{r}
+soft_usable<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/usability.txt",sep='\t',header = T)
+algor_meta<-read.table("../stage2_res/SCMMIB_metrics_final/usability_results/algorithm_metadata.txt",sep='\t',header = T,row.names = 1)
+algor_meta$method <- rownames(algor_meta)
+
+map_cellnum<-function(data){
+  return(plyr::mapvalues(data, from = c("c500","c1k","c5k","c10k","c50k","c100k","c500k"),
+                         to = c("500","1 k", "5 k", "10 k", "50 k"," 100 k","500 k")))
+}
+
+# paired RNA+ATAC
+pair_scal$label <-factor(pair_scal$label,levels=unique(pair_scal$label))
+
+pair_scal_wide<- dcast(pair_scal, V1~label,value.var = "time_s")
+colnames(pair_scal_wide)[1]<-"software"
+colnames(pair_scal_wide)<- map_cellnum(colnames(pair_scal_wide))
+pair_scal_wide[is.na(pair_scal_wide)]<-0
+pair_scal_wide[,-1][pair_scal_wide[,-1]>0]<-1
+tmp<-subset(soft_usable, soft_usable[,2]==1)[,c(1,8:12)]
+pair_rank<-merge(tmp,pair_scal_wide,by="software",all = T)
+pair_rank[,-1][is.na(pair_rank[,-1])]<-0
+pair_rank$Overall_Score = rowSums(pair_rank[,c(2:13)])
+
+colnames(pair_rank)[1]<-"method"
+
+pair_rank<-merge(algor_meta[,c(15,12,11,8,9)],pair_rank)
+
+pair_rank <- pair_rank %>% arrange(desc(Overall_Score)) %>% mutate(Rank=min_rank(desc(Overall_Score))) %>% select(Rank,everything())
+
+
+tmp <- pair_rank[,c(6:18)]
+tmp2 <- apply(tmp,2,plyr::mapvalues, from=c(0,1,2),to=c("","\u221A","\u221A\u221A"))
+
+pair_rank2<-cbind(pair_rank[,1:5],tmp2,pair_rank[,19])
+colnames(pair_rank2)[c(6,8,9,11,19)]<-c("Biological intepretability",'Peer review','Accuracy benchmark','Function documentations','Overall score')
+
+pair_usb_row_info <- data.frame(id = pair_rank2$method)
+
+pair_usb_column_info <- data.frame(id = colnames(pair_rank2),
+                          group = c("Text","Text", "Text", "Text", "Text",  "Text",
+                                    rep("Code&Paper", 5),
+                                    rep("Scalability", 7), 
+                                    "Overall score"), 
+                          geom = c(rep("text",18),
+                                   rep("bar",1)),
+                          width = c(1.5,9.5,3.5,2,3, rep(2,14)),
+                          overlay = F)
+pair_usb_palettes <- list(   "Text" = "black",
+                    "Code&Paper" = basecol(3)[1],
+                   "Scalability" = basecol(3)[2],
+                   "Overall score" = "Oranges"
+                   )
+p<-plot_scmmib_summary(data = pair_rank2,
+                       row_info = pair_usb_row_info,
+                       column_info =pair_usb_column_info,
+                       palettes = pair_usb_palettes,
+                       rank = FALSE
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ATAC_usablilty.pdf",device = cairo_pdf,width = 230, height = 157, units = "mm")
+# ggsave(p,filename="../stage2_figs/metric_summary/soft_rank/pair_RNA_ATAC_usablilty.pdf",width = 10, height = 8,device = "pdf")
+
+# 2.2 unpaired diagonal RNA+ATAC
+
+unpair_scal$label <-factor(unpair_scal$label,levels=unique(unpair_scal$label))
+unpair_scal$time_s2<- unpair_scal$time_s +unpair_scal$gam_time_s
+unpair_scal_wide<- dcast(unpair_scal, V1~label,value.var = "time_s2")
+colnames(unpair_scal_wide)[1]<-"software"
+colnames(unpair_scal_wide)<- map_cellnum(colnames(unpair_scal_wide))
+
+unpair_scal_wide[is.na(unpair_scal_wide)]<-0
+unpair_scal_wide[,-1][unpair_scal_wide[,-1]>0]<-1
+tmp<-subset(soft_usable, soft_usable[,5]==1)[,c(1,8:12)]
+unpair_rank<-merge(tmp,unpair_scal_wide,by="software",all = T)
+unpair_rank[,-1][is.na(unpair_rank[,-1])]<-0
+unpair_rank$Overall_Score = rowSums(unpair_rank[,c(2:13)])
+
+colnames(unpair_rank)[1]<-"method"
+
+unpair_rank<-merge(algor_meta[,c(15,12,11,8)],unpair_rank)
+
+unpair_rank <- unpair_rank %>% arrange(desc(Overall_Score)) %>% mutate(Rank=min_rank(desc(Overall_Score))) %>% select(Rank,everything())
+
+
+tmp <- unpair_rank[,c(6:17)]
+tmp2 <- apply(tmp,2,plyr::mapvalues, from=c(0,1,2),to=c("","\u221A","\u221A\u221A"))
+
+unpair_rank2<-cbind(unpair_rank[,1:4],tmp2,unpair_rank[,18])
+colnames(unpair_rank2)[c(6,7,9,17)]<-c('Peer review','Accuracy benchmark','Function documentations','Overall score')
+
+unpair_usb_row_info <- data.frame(id = unpair_rank2$method)
+
+unpair_usb_column_info <- data.frame(id = colnames(unpair_rank2),
+                          group = c("Text","Text", "Text", "Text", 
+                                    rep("Code&Paper", 5),
+                                    rep("Scalability", 7), 
+                                    "Overall score"), 
+                          geom = c(rep("text",16),
+                                   rep("bar",1)),
+                          width = c(1.5,11.5,3.5,3, rep(2,13)),
+                          overlay = F)
+unpair_usb_palettes <- list(   "Text" = "black",
+                    "Code&Paper" = basecol(3)[1],
+                   "Scalability" = basecol(3)[2],
+                   "Overall score" = "Oranges"
+                   )
+p<-plot_scmmib_summary(data = unpair_rank2,
+                       row_info = unpair_usb_row_info,
+                       column_info =unpair_usb_column_info,
+                       palettes = unpair_usb_palettes,
+                       rank = FALSE
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/diagonal_RNA_ATAC_usablilty.pdf",device = cairo_pdf,width = 230, height = 157, units = "mm")
+
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_usablilty.pdf",height = 8,width=10)
+
+# 2.3 paired RNA+ADT
+
+cite_scal$label <-factor(cite_scal$label,levels=unique(cite_scal$label))
+cite_scal_wide<- dcast(cite_scal, V1~label,value.var = "time_s")
+colnames(cite_scal_wide)[1]<-"software"
+colnames(cite_scal_wide)<- map_cellnum(colnames(cite_scal_wide))
+
+cite_scal_wide[is.na(cite_scal_wide)]<-0
+cite_scal_wide[,-1][cite_scal_wide[,-1]>0]<-1
+tmp<-subset(soft_usable, soft_usable[,3]==1)[,c(1,8:12)]
+cite_rank<-merge(tmp,cite_scal_wide,by="software",all = T)
+cite_rank[,-1][is.na(cite_rank[,-1])]<-0
+cite_rank$Overall_Score = rowSums(cite_rank[,c(2:13)])
+
+colnames(cite_rank)[1]<-"method"
+
+cite_rank<-merge(algor_meta[,c(15,12,11,8,9)],cite_rank)
+
+cite_rank <- cite_rank %>% arrange(desc(Overall_Score)) %>% mutate(Rank=min_rank(desc(Overall_Score))) %>% select(Rank,everything())
+
+
+tmp <- cite_rank[,c(6:18)]
+tmp2 <- apply(tmp,2,plyr::mapvalues, from=c(0,1,2),to=c("","\u221A","\u221A\u221A"))
+
+cite_rank2<-cbind(cite_rank[,1:4],tmp2,cite_rank[,18])
+colnames(cite_rank2)[c(5,7,8,10,18)]<-c("Biological inteptretability",'Peer review','Accuracy benchmark','Function documentations','Overall score')
+
+cite_usb_row_info <- data.frame(id = cite_rank2$method)
+
+cite_usb_column_info <- data.frame(id = colnames(cite_rank2),
+                          group = c("Text","Text", "Text", "Text", "Text", 
+                                    rep("Code&Paper", 5),
+                                    rep("Scalability", 7), 
+                                    "Overall score"), 
+                          geom = c(rep("text",17),
+                                   rep("bar",1)),
+                          width = c(1.5,9.5,3.5,3, rep(2,14)),
+                          overlay = F)
+cite_usb_palettes <- list(   "Text" = "black",
+                    "Code&Paper" = basecol(3)[1],
+                   "Scalability" = basecol(3)[2],
+                   "Overall score" = "Oranges"
+                   )
+p<-plot_scmmib_summary(data = cite_rank2,
+                       row_info = cite_usb_row_info,
+                       column_info =cite_usb_column_info,
+                       palettes = cite_usb_palettes,
+                       rank = FALSE
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_usablilty.pdf",device = cairo_pdf,width = 230, height = 157, units = "mm")
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_usablilty.pdf",height = 8,width=10)
+
+# 2.4 mosaic RNA+ADT
+map_mosaic_cellnum<-function(data){
+  return(plyr::mapvalues(data, from = c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k"),
+                         to = c("1k paired+1k unpaired", "5k paired+5k unpaired",
+                                "10k paired+10k unpaired", "20k paired+20k unpaired"
+                                )))
+}
+
+mosaic_rna_adt_scal$label <-factor(mosaic_rna_adt_scal$label,levels=c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k"))
+mosaic_rna_adt_scal_wide<- dcast(mosaic_rna_adt_scal, soft~label,value.var = "time_s")
+colnames(mosaic_rna_adt_scal_wide)[1]<-"software"
+colnames(mosaic_rna_adt_scal_wide)<-map_mosaic_cellnum(colnames(mosaic_rna_adt_scal_wide))
+
+mosaic_rna_adt_scal_wide[is.na(mosaic_rna_adt_scal_wide)]<-0
+mosaic_rna_adt_scal_wide[,-1][mosaic_rna_adt_scal_wide[,-1]>0]<-1
+tmp<-subset(soft_usable, soft_usable[,7]==1)[,c(1,8:12)]
+mosaic_rna_adt_rank<-merge(tmp,mosaic_rna_adt_scal_wide,by="software",all = T)
+mosaic_rna_adt_rank[,-1][is.na(mosaic_rna_adt_rank[,-1])]<-0
+mosaic_rna_adt_rank$Overall_Score = rowSums(mosaic_rna_adt_rank[,c(2:10)])
+
+colnames(mosaic_rna_adt_rank)[1]<-"method"
+
+mosaic_rna_adt_rank<-merge(algor_meta[,c(14,11,10,8)],mosaic_rna_adt_rank)
+
+mosaic_rna_adt_rank <- mosaic_rna_adt_rank %>% arrange(desc(Overall_Score)) %>% mutate(Rank=min_rank(desc(Overall_Score))) %>% select(Rank,everything())
+
+
+tmp <- mosaic_rna_adt_rank[,c(6:14)]
+tmp2 <- apply(tmp,2,plyr::mapvalues, from=c(0,1,2),to=c("","\u221A","\u221A\u221A"))
+
+mosaic_rna_adt_rank2<-cbind(mosaic_rna_adt_rank[,1:5],tmp2,mosaic_rna_adt_rank[,15])
+colnames(mosaic_rna_adt_rank2)[c(7,8,10,15)]<-c('Peer review','Accuracy benchmark','Function documentations','Overall score')
+
+mosaic_rna_adt_usb_row_info <- data.frame(id = mosaic_rna_adt_rank2$method)
+
+mosaic_rna_adt_usb_column_info <- data.frame(id = colnames(mosaic_rna_adt_rank2),
+                          group = c("Text","Text", "Text", "Text", "Text",  
+                                    rep("Code&Paper", 5),
+                                    rep("Scalability", 4), 
+                                    "Overall score"), 
+                          geom = c(rep("text",14),
+                                   rep("bar",1)),
+                          width = c(1.5,8.5,2.5,1.5,3, rep(2,10)),
+                          overlay = F)
+mosaic_rna_adt_usb_palettes <- list(   "Text" = "black",
+                    "Code&Paper" = basecol(3)[1],
+                   "Scalability" = basecol(3)[2],
+                   "Overall score" = "Oranges"
+                   )
+p<-plot_scmmib_summary(data = mosaic_rna_adt_rank2,
+                       row_info = mosaic_rna_adt_usb_row_info,
+                       column_info =mosaic_rna_adt_usb_column_info,
+                       palettes = mosaic_rna_adt_usb_palettes,
+                       rank = FALSE
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ADT_usablilty.pdf",device = cairo_pdf,width = 210, height = 157, units = "mm")
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ADT_usablilty.pdf",height = 8,width=10)
+
+# 2.5 mosaic RNA+ATAC
+
+mosaic_rna_atac_scal$label <-factor(mosaic_rna_atac_scal$label,levels=c("c1k_c1k","c5k_c5k","c10k_c10k","c20k_c20k"))
+mosaic_rna_atac_scal_wide<- dcast(mosaic_rna_atac_scal, soft~label,value.var = "time_s")
+colnames(mosaic_rna_atac_scal_wide)[1]<-"software"
+colnames(mosaic_rna_atac_scal_wide)<-map_mosaic_cellnum(colnames(mosaic_rna_atac_scal_wide))
+
+mosaic_rna_atac_scal_wide[is.na(mosaic_rna_atac_scal_wide)]<-0
+mosaic_rna_atac_scal_wide[,-1][mosaic_rna_atac_scal_wide[,-1]>0]<-1
+tmp<-subset(soft_usable, soft_usable[,6]==1)[,c(1,8:12)]
+mosaic_rna_atac_rank<-merge(tmp,mosaic_rna_atac_scal_wide,by="software",all = T)
+mosaic_rna_atac_rank[,-1][is.na(mosaic_rna_atac_rank[,-1])]<-0
+mosaic_rna_atac_rank$Overall_Score = rowSums(mosaic_rna_atac_rank[,c(2:10)])
+
+colnames(mosaic_rna_atac_rank)[1]<-"method"
+
+mosaic_rna_atac_rank<-merge(algor_meta[,c(15,12,11,8)],mosaic_rna_atac_rank)
+
+mosaic_rna_atac_rank <- mosaic_rna_atac_rank %>% arrange(desc(Overall_Score)) %>% mutate(Rank=min_rank(desc(Overall_Score))) %>% select(Rank,everything())
+
+
+tmp <- mosaic_rna_atac_rank[,c(6:14)]
+tmp2 <- apply(tmp,2,plyr::mapvalues, from=c(0,1,2),to=c("","\u221A","\u221A\u221A"))
+
+mosaic_rna_atac_rank2<-cbind(mosaic_rna_atac_rank[,1:5],tmp2,mosaic_rna_atac_rank[,15])
+colnames(mosaic_rna_atac_rank2)[c(7,8,10,15)]<-c('Peer review','Accuracy benchmark','Function documentations','Overall score')
+
+mosaic_rna_atac_usb_row_info <- data.frame(id = mosaic_rna_atac_rank2$method)
+
+mosaic_rna_atac_usb_column_info <- data.frame(id = colnames(mosaic_rna_atac_rank2),
+                          group = c("Text","Text", "Text", "Text", "Text",  
+                                    rep("Code&Paper", 5),
+                                    rep("Scalability", 4), 
+                                    "Overall score"), 
+                          geom = c(rep("text",14),
+                                   rep("bar",1)),
+                          width = c(1.5,8.5,2.5,1.5,3, rep(2,10)),
+                          overlay = F)
+mosaic_rna_atac_usb_palettes <- list(   "Text" = "black",
+                    "Code&Paper" = basecol(3)[1],
+                   "Scalability" = basecol(3)[2],
+                   "Overall score" = "Oranges"
+                   )
+p<-plot_scmmib_summary(data = mosaic_rna_atac_rank2,
+                       row_info = mosaic_rna_atac_usb_row_info,
+                       column_info =mosaic_rna_atac_usb_column_info,
+                       palettes = mosaic_rna_atac_usb_palettes,
+                       rank = FALSE
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ATAC_usablilty.pdf",device = cairo_pdf,width = 210, height = 157, units = "mm")
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ATAC_usablilty.pdf",height = 8,width=10)
+
+```
+
+
+
+
+

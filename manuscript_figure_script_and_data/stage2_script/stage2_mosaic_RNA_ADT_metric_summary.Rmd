@@ -1,0 +1,777 @@
+```{r}
+library(pheatmap)
+library(dplyr)
+library(tibble)
+library(ggimage)
+library(RColorBrewer)
+library(ggsci)
+library(stringr)
+library(tidyr)
+library(reshape2)
+
+my_col_bench<- pal_d3(palette = "category20", alpha = 1)(14)
+
+mytemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(colour = "black"),axis.text.y =element_text(colour = "black"),
+              axis.title.y=element_text(colour = "black"))
+
+widetemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(angle = 30,size = 12,hjust = 1,colour = "black"),axis.text.y =element_text(size = 12,colour = "black"),
+                axis.title.y=element_text(size=12,colour = "black"),legend.text=element_text(size=12))
+
+rect_temp<-theme_bw()+theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.minor = element_blank(), panel.grid.major =element_blank(),axis.text.y =element_text(colour = "black"), axis.title.y=element_text(colour = "black"))
+
+basecol<-function(n){
+  colall<-c('#d7191c','#31a354','#756bb1','#0571b0','#d95f0e','#bdbdbd')
+  return(colall[c(1:n)])
+}
+source("../plot_scmmib_table.r")
+```
+
+
+
+#  Mosaic accuracy and robustness
+```{r}
+
+# predefined functions
+
+get_score<-function(x){
+  return((x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T)))
+}
+cv<-function(x){
+  if (length(x)==1){
+    return(0)
+  }else{
+    return(sd(x)/mean(x))
+  }
+}
+
+calc_auc<-function(indata, increasing=T){
+  if (!increasing){
+    indata = rev(indata)
+  }
+  n_val=length(indata)
+  # max_val=max(indata)
+  max_val=indata[n_val]
+  if (max_val==0){
+    return(NA)
+  }else{
+    x=indata/max_val
+    x[x>1]<-1
+    out = (x[1]+2*sum(x[2:(n_val-1)])+x[n_val])/(2*n_val-2)
+    return(out)
+  }
+}
+# calc_auc<-function(indata){
+#   x=indata/indata[5]
+#   x[x>1]<-1
+#   out = (x[1]+2*sum(x[2:3])+x[4]*1.6+x[5]*0.6)/8 # each gradient 25% except 25%-10%=15%, and the weight would be 15%/25%=0.6
+#   return(out)
+# }
+
+multi_merge<-function(x,y,id="method"){
+  merge(x,y,by=id,all=T)
+}
+
+gpu_tools <- c("unionCom","cobolt","DCCA","GLUE","scDEC","scMM","scMVAE","totalVI","Multigrate","SCALEX","sciPENN","scMDC","scMVP","uniPort","scVAEIT","DeepMAPS","MultiVI","scMoMaT","SpatialGlue","MIDAS")
+cpu_tools <- c("LIGER iNMF","Seurat v3 CCA","Seurat v4 RPCA","CiteFuse","MOFA+","scAI","LIGER online iNMF","Seurat v4 WNN","MultiMAP","bindSC","LIGER UINMF","Pamona","MEFISTO","MaxFuse","SIMBA","Seurat v5 bridge","StabMap")
+
+# map_algor_name<-function(raw_name){
+#   return(plyr::mapvalues(raw_name, from = c("sciPENN-louvain","totalVI-louvain","MIDAS-louvain","multigrate-louvain","scmomat-louvain","scVAEIT-louvain","SeuratV5-louvain","StabMap-louvain"),
+#                          to=c("sciPENN","totalVI","MIDAS","Multigrate","scMoMaT","scVAEIT","Seurat v5 bridge","StabMap")))
+# }
+
+map_algor_name<-function(raw_name){
+  return(plyr::mapvalues(gsub("-louvain","",raw_name), from = c("sciPENN","totalVI","MIDAS","multigrate","scmomat","scVAEIT","SeuratV5","StabMap"),
+                         to=c("sciPENN","totalVI","MIDAS","Multigrate","scMoMaT","scVAEIT","Seurat v5 bridge","StabMap")))
+}
+
+map_metrics_name<-function(raw_name){
+  return(plyr::mapvalues(raw_name, from = c("Batch_ASW_batch","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1","nearest_cell_barcode","nearest_cell_celltype.l1","nearest_cell_celltype","bio_cons_score","batch_rm_score","final_score"), to=c("Batch ASW","graph connectivity","graph connectivity level 1","graph iLISI","ARI","ARI level 1","AMI","AMI level 1","graph cLISI","graph cLISI level 1","isolated labels ASW","isolated labels ASW level 1","Cell match","Cell type level 1 match","Cell type match","Bio conservation score","Batch removal score","Overall score")))
+}
+
+
+map_imputation_metric<-function(indata){
+  return(plyr::mapvalues(from=c("rna_raw_celltype_cor","rna_raw_cell_cor","rna_knn_celltype_cor","rna_knn_cell_cor",
+                                "adt_raw_celltype_cor","adt_raw_cell_cor"),
+                         to=c("raw scRNA correlation (cell type)", "raw scRNA correlation (cell)",
+                   "kNN smoothed scRNA correlation (cell type)", "kNN smoothed scRNA correlation (cell)",
+                  "ADT correlation (cell type)", "ADT correlation (cell)"),indata))
+}
+
+map_metrics_name2<-function(raw_name){
+  return(plyr::mapvalues(raw_name, from = paste0(c("Batch_ASW_batch","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1","FOSCTTM","nearest_cell_barcode","nearest_cell_celltype.l1","nearest_cell_celltype","bio_cons_score","batch_rm_score","final_score"),"_auc"), to=paste0(c("Batch ASW","graph connectivity","graph connectivity level 1","graph iLISI","ARI","ARI level 1","AMI","AMI level 1","graph cLISI","graph cLISI level 1","isolated labels ASW","isolated labels ASW level 1","FOSCTTM","Cell match","Cell type level 1 match","Cell type match","Bio conservation score","Batch removal score","Overall score"), " AUC")))
+}
+
+map_metrics_name3<-function(raw_name){
+  metric_tmp1<- c("Batch_ASW_batch","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1","nearest_cell_barcode","nearest_cell_celltype.l1","nearest_cell_celltype","FOSCTTM")
+  metric_tmp2<- c("Batch ASW","graph connectivity","graph connectivity level 1","graph iLISI","ARI","ARI level 1","AMI","AMI level 1","graph cLISI","graph cLISI level 1","isolated labels ASW","isolated labels ASW level 1","Cell match","Cell type level 1 match","Cell type match","FOSCTTM")
+  metrics_in <- c(paste0(metric_tmp1,"_pair_auc"),paste0(metric_tmp1,"_pair_down10"),paste0(metric_tmp1,"_unpair_auc"),paste0(metric_tmp1,"_unpair_down10"))
+  metrics_out <- c(paste0(metric_tmp2," (paired data downsample AUC)"),paste0(metric_tmp2," (paired data downsample to 10%)"),paste0(metric_tmp2," (unpaired data downsample AUC)"),paste0(metric_tmp2," (unpaired data downsample to 10%)"))
+  return(plyr::mapvalues(raw_name, from = metrics_in, to = metrics_out))
+}
+
+
+
+select_col_names<-c("Batch_ASW_batch","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1","FOSCTTM","nearest_cell_barcode","nearest_cell_celltype.l1","nearest_cell_celltype","bio_cons_score","batch_rm_score","final_score","method","nCell","Output")
+
+map_downsample_metric<-function(raw_name){
+  return(plyr::mapvalues(raw_name, from = c("R10_A10","R25_A25","R50_A50","R75_A75","R100_A100"),
+                         to = c("10","25","50","75","100")))
+}
+
+map_cnk_metric<-function(raw_name){
+  return(plyr::mapvalues(raw_name, from = c("c3k","c5k","c10k","c20k"),
+                         to = c(3000, 5000, 10000, 20000)))
+}
+
+
+# Mosaic RNA+ADT
+mosaic_rna_adt_bmmc_acc1<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/accuracy/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+mosaic_rna_adt_bmmc_acc1_2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/accuracy/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_noADT_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_acc2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/accuracy/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_unpaired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_acc3<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/accuracy/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_imputation_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+# 1.1 acc
+mosaic_rna_adt_bmmc_acc1$method<-map_algor_name(mosaic_rna_adt_bmmc_acc1[,1])
+acc_tab1<- mosaic_rna_adt_bmmc_acc1 %>% dplyr::group_by(method) %>% dplyr::summarise(Batch_ASW=median(Batch_ASW_batch),graph_connectivity=median(graph_connectivity),graph_iLISI=median(graph_iLISI),ARI=median(ARI),AMI=median(AMI),graph_cLISI=median(graph_cLISI),isolated_labels_ASW=median(isolated_labels_ASW),graph_connectivity.l1=median(graph_connectivity.l1),ARI.l1=median(ARI.l1),AMI.l1=median(AMI.l1),graph_cLISI.l1=median(graph_cLISI.l1),isolated_labels_ASW.l1=median(isolated_labels_ASW.l1))
+
+colnames(acc_tab1)<-map_metrics_name(colnames(acc_tab1))
+
+colnames(acc_tab1)[2:13]<-paste0(colnames(acc_tab1)[2:13]," (full data)")
+
+mosaic_rna_adt_bmmc_acc1_2$method<-map_algor_name(mosaic_rna_adt_bmmc_acc1_2[,1])
+acc_tab1_2<- mosaic_rna_adt_bmmc_acc1_2 %>% dplyr::group_by(method) %>% dplyr::summarise(Batch_ASW=median(Batch_ASW_batch),graph_connectivity=median(graph_connectivity),graph_iLISI=median(graph_iLISI),ARI=median(ARI),AMI=median(AMI),graph_cLISI=median(graph_cLISI),isolated_labels_ASW=median(isolated_labels_ASW),graph_connectivity.l1=median(graph_connectivity.l1),ARI.l1=median(ARI.l1),AMI.l1=median(AMI.l1),graph_cLISI.l1=median(graph_cLISI.l1),isolated_labels_ASW.l1=median(isolated_labels_ASW.l1))
+
+colnames(acc_tab1_2)<-map_metrics_name(colnames(acc_tab1_2))
+colnames(acc_tab1_2)[2:13]<-paste0(colnames(acc_tab1_2)[2:13]," (CITE+RNA)")
+
+mosaic_rna_adt_bmmc_acc2$method<-map_algor_name(mosaic_rna_adt_bmmc_acc2[,1])
+acc_tab2<- mosaic_rna_adt_bmmc_acc2 %>% dplyr::group_by(method) %>%
+  dplyr::summarise(FOSCTTM_neg=1-median(FOSCTTM),nearest_cell_barcode=median(nearest_cell_barcode),nearest_cell_celltype=median(nearest_cell_celltype),nearest_cell_celltype.l1=median(nearest_cell_celltype.l1))
+colnames(acc_tab2)<-map_metrics_name(colnames(acc_tab2))
+
+
+mosaic_rna_adt_bmmc_acc3$method <- map_algor_name(mosaic_rna_adt_bmmc_acc3[,1])
+acc_tab3<-mosaic_rna_adt_bmmc_acc3 %>% dplyr::group_by(method) %>%
+  dplyr::summarise(across(.cols=colnames(mosaic_rna_adt_bmmc_acc3)[c(8:11,14,15)],.fns=median))
+# mosaic_rna_adt_acc_summary<-
+colnames(acc_tab3)<-map_imputation_metric(colnames(acc_tab3))
+mosaic_rna_adt_acc_summary<-Reduce(multi_merge,list(acc_tab1,acc_tab1_2,acc_tab2,acc_tab3))
+
+# cv (deprecated)
+# cv_tab1<- mosaic_rna_adt_bmmc_acc1 %>% dplyr::group_by(method) %>% dplyr::summarise(Batch_ASW_batch=cv(Batch_ASW_batch),Batch_ASW_site=cv(Batch_ASW_site),graph_connectivity=cv(graph_connectivity),graph_iLISI=cv(graph_iLISI),ARI=cv(ARI),AMI=cv(AMI),graph_cLISI=cv(graph_cLISI),isolated_labels_ASW=cv(isolated_labels_ASW))
+# 
+# cv_tab2<- mosaic_rna_adt_bmmc_acc2 %>% dplyr::group_by(method) %>%
+#   dplyr::summarise(FOSCTTM_neg=1-cv(FOSCTTM),nearest_cell_barcode.RNA=cv(nearest_cell_barcode.RNA),nearest_cell_barcode.ADT=cv(nearest_cell_barcode.ADT),nearest_cell_celltype.RNA=cv(nearest_cell_celltype.RNA),nearest_cell_celltype.ADT=cv(nearest_cell_celltype.ADT))
+# 
+# cv_tab3<-mosaic_rna_adt_bmmc_acc3 %>% dplyr::group_by(method) %>%
+#   dplyr::summarise(rna_impute_acc=cv(rna_cor_raw_vs_imp),adt_impute_acc=cv(adt_cor_raw_vs_imp))
+# 
+# mosaic_rna_adt_cv_summary<-Reduce(multi_merge,list(cv_tab1,cv_tab2,cv_tab3))
+
+# draw boxplot for each metrics
+
+metrics_boxplot<-function(indata,index_col=1, sel_cols=c(2:ncol(indata)), task="mosaic_RNA+ADT",
+                          graph_title="BMMC_s2d1_s3d6", ylabs=colnames(indata)[sel_cols]){
+  i=1
+  for (sel_col in sel_cols){
+    p_tab<-indata[,c(index_col,sel_col)]
+    colnames(p_tab)<-c("method","value")
+    p_tab <- p_tab %>% drop_na(value)
+    p_median<- p_tab %>% group_by(method) %>% 
+      dplyr::summarise(med=median(value)) %>%  arrange(med)
+    p_tab$method<-factor(p_tab$method,levels = p_median$method)
+    p<-ggplot(p_tab,aes(x=method,y=value))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+
+      ylab(ylabs[i])+ggtitle(graph_title)
+    ggsave(p,filename=paste0("../stage2_figs/metric_summary/",task,"/metric_boxplot/",task,"_",graph_title,"_",ylabs[i],"_boxplot.pdf"),height=5,width=3)
+    i=i+1
+  }
+}
+# plot for each metric
+p_tab<-mosaic_rna_adt_bmmc_acc1
+colnames(p_tab)<-map_metrics_name(colnames(p_tab))
+metrics_boxplot(p_tab,index_col=1,sel_cols = c(4,6:16),ylabs = paste0(colnames(p_tab)[c(4,6:16)]," (full data)"))
+
+p_tab<-mosaic_rna_adt_bmmc_acc1_2
+colnames(p_tab)<-map_metrics_name(colnames(p_tab))
+metrics_boxplot(p_tab,index_col=1,sel_cols = c(4,6:16),ylabs = paste0(colnames(p_tab)[c(4,6:16)]," (CITE+RNA)"))
+
+p_tab<-mosaic_rna_adt_bmmc_acc2[,intersect(colnames(mosaic_rna_adt_bmmc_acc2),select_col_names)]
+colnames(p_tab)<-map_metrics_name(colnames(p_tab))
+metrics_boxplot(p_tab,index_col=1,sel_cols = c(4:7))
+# metrics_boxplot(mosaic_rna_adt_bmmc_acc3,index_col=8,sel_cols = c(3,4,6,7))
+
+# summarize single embed and cross embed metrics(acc_tab1, acc_tab1_2, acc_tab2)
+
+acc_tab1_summary<-data.frame(
+  bio_cons_3batch=rowMeans(apply(acc_tab1[,c(2,3,4,9)],2, get_score),na.rm=T),
+  batch_match_3batch=rowMeans(apply(acc_tab1[,c(5:8,10:13)],2, get_score),na.rm=T),
+  method=acc_tab1$method
+)
+
+acc_tab1_2_summary<-data.frame(
+  bio_cons_2batch=rowMeans(apply(acc_tab1_2[,c(2,3,4,9)],2, get_score),na.rm=T),
+  batch_match_2batch=rowMeans(apply(acc_tab1_2[,c(5:8,10:13)],2, get_score),na.rm=T),
+  method=acc_tab1_2$method
+)
+
+acc_tab2_tmp<-apply(acc_tab2[,c(2:5)],2, get_score)
+acc_tab2_tmp2<-data.frame(FOSCTTM=acc_tab2_tmp[,1],cell_barcode_match=acc_tab2_tmp[,2],cell_type_match=rowMeans(acc_tab2_tmp[,3:4]))
+
+acc_tab2_summary<-data.frame(
+  cross_embed=rowMeans(acc_tab2_tmp2,na.rm=T),
+  method=acc_tab2$method
+)
+
+multi_merge<-function(x,y,id="method"){
+  merge(x,y,by=id,all=T)
+}
+
+#
+mosaic_rna_adt_metric_score_summary<-Reduce(multi_merge,list(acc_tab1_summary,acc_tab1_2_summary,acc_tab2_summary))
+
+mosaic_rna_adt_metric_score_summary$embed_acc=rowMeans(mosaic_rna_adt_metric_score_summary[,2:5],na.rm=T)
+
+mosaic_rna_adt_metric_score_summary <- mosaic_rna_adt_metric_score_summary %>% mutate(avg=(cross_embed+embed_acc)) %>% arrange(by=desc(avg ))
+
+rownames(mosaic_rna_adt_metric_score_summary)<-mosaic_rna_adt_metric_score_summary[,1]
+p_tab<-mosaic_rna_adt_metric_score_summary[,2:7]
+
+colnames(p_tab)<-c("Bio conservation (full data)","Batch removal (full data)","Bio conservation (CITE+RNA)","Batch removal (CITE+RNA)", "Cell alignment accuracy","Embedding accuracy")
+ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Embedding accuracy",4),"Cell alignment accuracy","Embedding accuracy"))
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_metric_summary_score_heatmap.pdf",cluster_rows = F,cluster_cols = F,show_rownames = T,show_colnames = T, display_numbers = T,annotation_col = ann_col,number_format = "%.2f",width=6,height = 4.5)
+
+# plot SCMMIB summary plot
+p_tab<-mosaic_rna_adt_metric_score_summary
+colnames(p_tab)[1]<- "method"
+p_tab <- p_tab %>% mutate(cross_embed_rank=rank(-cross_embed),embed_acc_rank=rank(-embed_acc))
+p_tab[c("totalVI","sciPENN"),"cross_embed_rank"]<-c(NA,NA)
+p_tab_rank <- p_tab %>% mutate(Rank=min_rank(cross_embed_rank+embed_acc_rank)) %>% arrange(Rank)  %>% select(Rank,everything())
+p_tab_rank$Rank[is.na(p_tab_rank$Rank)] <- "n.a."
+p_tab_rank<-p_tab_rank[,1:8]
+
+colnames(p_tab_rank)[3:8]<- c("Bio conservation (full data)","Batch removal (full data)","Bio conservation (CITE+RNA)","Batch removal (CITE+RNA)", "Cell alignment accuracy", "Embedding accuracy")
+mosaic_rna_adt_acc_row_info <- data.frame(id = p_tab_rank$method)
+mosaic_rna_adt_acc_column_info <- data.frame(id = colnames(p_tab_rank),
+                          group = c("Text","Text",
+                                    rep("Embedding accuracy", 4),
+                                    "Cell alignment accuracy",
+                                    "Embedding accuracy"), 
+                          geom = c(rep("text",2),
+                                   rep("bar",6)),
+                          width = c(1.5,8.5,rep(2,6)),
+                          overlay = F)
+mosaic_rna_adt_acc_palettes <- list(   "Text" = "black",
+                    "Embedding accuracy" = "Blues",
+                   "Cell alignment accuracy" = "Greens"
+                   )
+p<-plot_scmmib_summary(data = p_tab_rank,
+                       row_info = mosaic_rna_adt_acc_row_info,
+                       column_info =mosaic_rna_adt_acc_column_info,
+                       palettes = mosaic_rna_adt_acc_palettes,
+                       rank = TRUE,
+                       rect_normalize = T
+                       )
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ATAC_accuracy.pdf",device=cairo_pdf,width = 230, height = 157, units = "mm")
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ADT_accuracy.pdf",width = 7, height =5)
+
+
+# Calculate the SD and CV for mosaic scRNA and ADT methods
+# metric_cols<-colnames(mosaic_rna_adt_bmmc_p10_acc)[c(1,4:14)]
+metric_cols<-setdiff(select_col_names,c("nCell","Output"))
+calc_cv<-function(data,sel_cols=select_col_names){
+  data2 <-data[,intersect(sel_cols,colnames(data))]
+  out<-data2 %>% group_by(method) %>% summarise(across(.cols=everything(),.fns=cv)) %>% melt()
+  return(out)
+}
+calc_sd<-function(data,sel_cols=select_col_names){
+  data2 <-data[,intersect(sel_cols,colnames(data))]
+  out<-data2 %>% group_by(method) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
+  return(out)
+}
+
+cv_output<-c()
+for (mosaic_data in list(mosaic_rna_adt_bmmc_acc1,mosaic_rna_adt_bmmc_acc1_2,mosaic_rna_adt_bmmc_acc2)){
+  cv_output<-rbind(cv_output,calc_cv(mosaic_data, sel_cols=metric_cols))
+}
+
+cv_output<-subset(cv_output,abs(value)>0 | method %in% gpu_tools)
+p<- ggplot(cv_output, aes(x=method,y=abs(value),col=method))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+mytemp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Absolute coefficient of Variation")+xlab(NULL)+ylim(c(0,0.5))
+# p<- ggplot(cv_output, aes(x=method,y=abs(value),col=method))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+rect_temp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Absolute coefficient of Variation")+xlab(NULL)+ylim(c(0,1))+coord_flip()
+# ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_boxplot/mosaic_RNA+ADT_algorithm_cv_robust.pdf",width=4,height=4.5)
+ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_boxplot/mosaic_RNA+ADT_algorithm_cv_robust.pdf",width=7,height=4)
+
+sd_output<-c()
+for (mosaic_data in list(mosaic_rna_adt_bmmc_acc1,mosaic_rna_adt_bmmc_acc1_2,mosaic_rna_adt_bmmc_acc2)){
+  sd_output<-rbind(sd_output,calc_sd(mosaic_data,metric_cols))
+}
+
+sd_output<-subset(sd_output,abs(value)>0 | method %in% gpu_tools)
+p<- ggplot(sd_output, aes(x=method,y=abs(value),col=method))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+mytemp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Standard deviation")+xlab(NULL)+ylim(c(0,0.2))
+# p<- ggplot(sd_output, aes(x=method,y=abs(value),col=method))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+rect_temp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Standard deviation")+xlab(NULL)+coord_flip()
+# ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_boxplot/mosaic_RNA+ADT_algorithm_sd_robust.pdf",width=4,height=4.5)
+ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_boxplot/mosaic_RNA+ADT_algorithm_sd_robust.pdf",width=7,height=4)
+
+
+# plot mosaic cross modality imputation 
+# p_tab<-melt(acc_tab3,id="method")
+p_tab<- as.data.frame(acc_tab3)
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+# colnames(p_tab)<-plyr::mapvalues(colnames(p_tab), from=c("rna_impute_acc","rna_impute_acc_knn","adt_impute_acc","adt_impute_acc_knn"),
+#                                  to=c("RNA impute cor (vs Raw)","RNA impute cor (vs KNN smoothed)",
+#                                       "ADT impute cor (vs Raw)","ADT impute cor (vs KNN smoothed)"))
+ann_col<-data.frame(row.names = colnames(p_tab),metric=c(rep("scRNA imputation accuracy",4),rep("ADT imputation accuracy",2)))
+
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_imputation_accuracy_heatmap.pdf",show_rownames = T,show_colnames = T, display_numbers = T, number_format = "%.2f",scale = "none",width=5.5,height = 4.5,cluster_rows = F,cluster_cols = F,annotation_col = ann_col)
+# p<-ggplot(p_tab,aes(x=variable,y=value,fill=method))+
+
+# generate html input
+
+html_out<- function(in_tab,sel_cols){
+  colnames(in_tab)<- map_metrics_name(colnames(in_tab))
+  colnames(in_tab)<- map_imputation_metric(colnames(in_tab))
+  in_tab[,1] <-map_algor_name(in_tab[,1])
+  in_tab[,sel_cols]<- round(in_tab[,sel_cols],4)
+  return(in_tab)
+}
+
+write.table(html_out(mosaic_rna_adt_bmmc_acc1[,-5],4:15),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+write.table(html_out(mosaic_rna_adt_bmmc_acc1_2[,-5],4:15),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_noADT_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+write.table(html_out(mosaic_rna_adt_bmmc_acc2[,c(1:5,8,11)],4:7),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_unpaired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+write.table(html_out(mosaic_rna_adt_bmmc_acc3[,c(1:3,8:11,14,15)],4:9),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_accuracy_BMMC_s2d1_s3d6_imputation_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+```
+
+
+
+
+2. robustness
+```{r}
+
+mosaic_rna_adt_bmmc_down_rob1<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_down_rob1_2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_noADT_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_down_rob2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_unpaired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+
+mosaic_rna_adt_bmmc_cnk_rob1<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_cnk_rob1_2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_noADT_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+mosaic_rna_adt_bmmc_cnk_rob2<-read.table("../stage2_res/SCMMIB_metrics_final/mosaic_scRNA+ADT/robustness/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_unpaired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+
+# 2.1 analyze whether the metric reasonable for robustness evaluation.
+mosaic_rna_adt_bmmc_down_rob1$s2d1 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob1$s2d1)
+mosaic_rna_adt_bmmc_down_rob1$s3d6 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob1$s3d6)
+mosaic_rna_adt_bmmc_down_rob1$method <- map_algor_name(mosaic_rna_adt_bmmc_down_rob1$method)
+
+mosaic_rna_adt_bmmc_down_rob1_eval<- mosaic_rna_adt_bmmc_down_rob1[,c(1,4:17)] %>% dplyr::filter(s3d6=="100") %>%
+                                                  reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+
+mosaic_rna_adt_bmmc_down_rob1_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob1_eval$variable)
+mosaic_rna_adt_bmmc_down_rob1_eval$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob1_eval$s2d1,levels = c("10","25","50","75","100"))
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob1_eval,aes(x=variable, y=value,fill=s2d1))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("unpaired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_paired_metrics_s2d1_grad.pdf",height = 5,width=12)
+
+mosaic_rna_adt_bmmc_down_rob1_eval<- mosaic_rna_adt_bmmc_down_rob1[,c(1,4:17)] %>% dplyr::filter(s2d1=="100") %>%
+                                                  reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+
+mosaic_rna_adt_bmmc_down_rob1_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob1_eval$variable)
+mosaic_rna_adt_bmmc_down_rob1_eval$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob1_eval$s3d6,levels = c("10","25","50","75","100"))
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob1_eval,aes(x=variable, y=value,fill=s3d6))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_paired_metrics_s3d6_grad.pdf",height = 5,width=12)
+
+
+# cite+RNA
+mosaic_rna_adt_bmmc_down_rob1_2$s2d1 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob1_2$s2d1)
+mosaic_rna_adt_bmmc_down_rob1_2$s3d6 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob1_2$s3d6)
+mosaic_rna_adt_bmmc_down_rob1_2$method <- map_algor_name(mosaic_rna_adt_bmmc_down_rob1_2$method)
+
+mosaic_rna_adt_bmmc_down_rob1_2_eval<- mosaic_rna_adt_bmmc_down_rob1_2[,c(1,4:17)] %>% dplyr::filter(s3d6=="100") %>% reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_down_rob1_2_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob1_2_eval$variable)
+mosaic_rna_adt_bmmc_down_rob1_2_eval$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob1_2_eval$s2d1,levels = c("10","25","50","75","100"))
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob1_2_eval,aes(x=variable, y=value,fill=s2d1))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("unpaired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_paired_metrics_noADT_s2d1_grad.pdf",height = 5,width=12)
+
+
+mosaic_rna_adt_bmmc_down_rob1_2_eval<- mosaic_rna_adt_bmmc_down_rob1_2[,c(1,4:17)] %>% dplyr::filter(s2d1=="100") %>% reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_down_rob1_2_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob1_2_eval$variable)
+mosaic_rna_adt_bmmc_down_rob1_2_eval$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob1_2_eval$s3d6,levels = c("10","25","50","75","100"))
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob1_2_eval,aes(x=variable, y=value,fill=s3d6))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_paired_metrics_noADT_s3d6_grad.pdf",height = 5,width=12)
+
+# cross embed
+mosaic_rna_adt_bmmc_down_rob2$s2d1 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob2$s2d1)
+mosaic_rna_adt_bmmc_down_rob2$s3d6 <-map_downsample_metric(mosaic_rna_adt_bmmc_down_rob2$s3d6)
+mosaic_rna_adt_bmmc_down_rob2$method <- map_algor_name(mosaic_rna_adt_bmmc_down_rob2$method)
+
+mosaic_rna_adt_bmmc_down_rob2_eval<- mosaic_rna_adt_bmmc_down_rob2[,c(1,4,5,8,11,14,15)] %>% dplyr::filter(s3d6=="100") %>% reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+
+mosaic_rna_adt_bmmc_down_rob2_eval$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob2_eval$s2d1,levels = c("10","25","50","75","100"))
+mosaic_rna_adt_bmmc_down_rob2_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob2_eval$variable)
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob2_eval,aes(x=variable, y=value,fill=s2d1))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("unpaired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_unpaired_metrics_s2d1_grad.pdf",height = 5,width=7)
+
+
+mosaic_rna_adt_bmmc_down_rob2_eval<- mosaic_rna_adt_bmmc_down_rob2[,c(1,4,5,8,11,14,15)] %>% dplyr::filter(s2d1=="100") %>% reshape2::melt(id.vars = c("s2d1","s3d6","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_down_rob2_eval$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob2_eval$s3d6,levels = c("10","25","50","75","100"))
+mosaic_rna_adt_bmmc_down_rob2_eval$variable<-map_metrics_name(mosaic_rna_adt_bmmc_down_rob2_eval$variable)
+p<-ggplot(mosaic_rna_adt_bmmc_down_rob2_eval,aes(x=variable, y=value,fill=s3d6))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired data down",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_s2d1_s3d6_unpaired_metrics_s3d6_grad.pdf",height = 5,width=7)
+
+# next evaluate cnk robustness metrics.
+mosaic_rna_adt_bmmc_cnk_rob1_eval<- mosaic_rna_adt_bmmc_cnk_rob1[,c(1,4:16)] %>%
+                                                  reshape2::melt(id.vars = c("paired_size","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_cnk_rob1_eval$method <- map_algor_name(mosaic_rna_adt_bmmc_cnk_rob1_eval$method)
+mosaic_rna_adt_bmmc_cnk_rob1_eval$variable <- map_metrics_name(mosaic_rna_adt_bmmc_cnk_rob1_eval$variable)
+mosaic_rna_adt_bmmc_cnk_rob1_eval$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob1_eval$paired_size)
+
+mosaic_rna_adt_bmmc_cnk_rob1_eval$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob1_eval$paired_size,levels = c(3000,5000,10000,20000))
+p<-ggplot(mosaic_rna_adt_bmmc_cnk_rob1_eval,aes(x=variable, y=as.numeric(value),fill=paired_size))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired dataset size",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_cnk_paired_metrics.pdf",height = 5,width=12)
+
+
+mosaic_rna_adt_bmmc_cnk_rob1_2_eval<- mosaic_rna_adt_bmmc_cnk_rob1_2[,c(1,6:12)] %>% reshape2::melt(id.vars = c("paired_size","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_cnk_rob1_2_eval$method <- map_algor_name(mosaic_rna_adt_bmmc_cnk_rob1_2_eval$method)
+mosaic_rna_adt_bmmc_cnk_rob1_2_eval$variable <- map_metrics_name(mosaic_rna_adt_bmmc_cnk_rob1_2_eval$variable)
+mosaic_rna_adt_bmmc_cnk_rob1_2_eval$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob1_2_eval$paired_size)
+
+mosaic_rna_adt_bmmc_cnk_rob1_2_eval$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob1_2_eval$paired_size,levels = c(3000,5000,10000,20000))
+
+p<-ggplot(mosaic_rna_adt_bmmc_cnk_rob1_2_eval,aes(x=variable, y=as.numeric(value),fill=paired_size))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired dataset size",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_cnk_paired_metrics_noADT.pdf",height = 4,width=8)
+
+mosaic_rna_adt_bmmc_cnk_rob2_eval<- mosaic_rna_adt_bmmc_cnk_rob2[,c(1,2,3,6,9,12)] %>% reshape2::melt(id.vars = c("paired_size","method"),
+                                                 variable.name = "variable",
+                                                 value.name = "value")
+mosaic_rna_adt_bmmc_cnk_rob2_eval$method <- map_algor_name(mosaic_rna_adt_bmmc_cnk_rob2_eval$method)
+mosaic_rna_adt_bmmc_cnk_rob2_eval$variable <- map_metrics_name(mosaic_rna_adt_bmmc_cnk_rob2_eval$variable)
+mosaic_rna_adt_bmmc_cnk_rob2_eval$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob2_eval$paired_size)
+
+mosaic_rna_adt_bmmc_cnk_rob2_eval$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob2_eval$paired_size,levels = c(3000,5000,10000,20000))
+
+p<-ggplot(mosaic_rna_adt_bmmc_cnk_rob2_eval,aes(x=variable, y=as.numeric(value),fill=paired_size))+geom_boxplot(width=0.5)+widetemp+scale_fill_manual("paired dataset size",values=basecol(5))+xlab(NULL)+ylab(NULL)
+ggsave(p,filename="../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_eval/mosaic_scRNA+ADT_robustness_cnk_unpaired_metrics.pdf",height = 4,width=6)
+
+
+# Then plot boxplot of appropriate metrics for cnk and downsample robustness.
+# cnk only use unpaired metrics
+
+# mosaic_rna_adt_bmmc_cnk_rob1$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob1$paired_size)
+# mosaic_rna_adt_bmmc_cnk_rob1$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob1$paired_size,levels = c(3000,5000,10000,20000))
+# 
+# cnk_tab1_auc<- mosaic_rna_adt_bmmc_cnk_rob1 %>% dplyr::group_by(method) %>% arrange(paired_size) %>%
+#   dplyr::summarise(ARI_auc=calc_auc(ARI),ARI.l1_auc=calc_auc(ARI.l1),
+#                    AMI_auc=calc_auc(AMI),AMI.l1_auc=calc_auc(AMI.l1),
+#                    graph_cLISI_auc=calc_auc(graph_cLISI), graph_cLISI.l1_auc=calc_auc(graph_cLISI.l1),
+#                    isolated_labels_ASW_auc=calc_auc(isolated_labels_ASW),isolated_labels_ASW.l1_auc=calc_auc(isolated_labels_ASW))
+# 
+# 
+# mosaic_rna_adt_bmmc_cnk_rob1_2$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob1_2$paired_size)
+# mosaic_rna_adt_bmmc_cnk_rob1_2$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob1_2$paired_size,levels = c(3000,5000,10000,20000))
+# 
+# cnk_tab1_2_auc<- mosaic_rna_adt_bmmc_cnk_rob1_2 %>% dplyr::group_by(method) %>% arrange(paired_size) %>%
+#   dplyr::summarise(ARI_auc=calc_auc(ARI),ARI.l1_auc=calc_auc(ARI.l1),
+#                    AMI_auc=calc_auc(AMI),AMI.l1_auc=calc_auc(AMI.l1),
+#                    graph_cLISI_auc=calc_auc(graph_cLISI), graph_cLISI.l1_auc=calc_auc(graph_cLISI.l1),
+#                    isolated_labels_ASW_auc=calc_auc(isolated_labels_ASW),isolated_labels_ASW.l1_auc=calc_auc(isolated_labels_ASW))
+
+
+mosaic_rna_adt_bmmc_cnk_rob2$paired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob2$paired_size)
+mosaic_rna_adt_bmmc_cnk_rob2$unpaired_size<- map_cnk_metric(mosaic_rna_adt_bmmc_cnk_rob2$unpaired_size)
+mosaic_rna_adt_bmmc_cnk_rob2$paired_size<-factor(mosaic_rna_adt_bmmc_cnk_rob2$paired_size,levels = c(3000,5000,10000,20000))
+cnk_tab2_auc<-  mosaic_rna_adt_bmmc_cnk_rob2 %>% dplyr::group_by(method) %>% arrange(paired_size) %>%
+  dplyr::summarise(FOSCTTM_auc=calc_auc(1-FOSCTTM), nearest_cell_celltype_auc=calc_auc(nearest_cell_celltype),
+                     nearest_cell_celltype.l1_auc=calc_auc(nearest_cell_celltype.l1),nearest_cell_barcode_auc=calc_auc(nearest_cell_barcode))
+
+
+# plot cnk robustness summary figures
+# p_tab1<- as.data.frame(cnk_tab1_auc)
+# rownames(p_tab1)<-p_tab1[,1]
+# colnames(p_tab1)<-map_metrics_name2(colnames(p_tab1))
+# colnames(p_tab1)[-1]<-paste0(colnames(p_tab1)[-1], " (full data)")
+# 
+# 
+# p_tab1_2<- as.data.frame(cnk_tab1_2_auc)
+# rownames(p_tab1_2)<-p_tab1_2[,1]
+# colnames(p_tab1_2)<-map_metrics_name2(colnames(p_tab1_2))
+# colnames(p_tab1_2)[-1]<-paste0(colnames(p_tab1_2)[-1], " (CITE+RNA)")
+
+p_tab2<- as.data.frame(cnk_tab2_auc)
+rownames(p_tab2)<-p_tab2[,1]
+colnames(p_tab2)<-map_metrics_name2(colnames(p_tab2))
+
+# p_tab<-Reduce(multi_merge,list(p_tab1, p_tab1_2, p_tab2))
+p_tab<-p_tab2
+p_tab$method<-map_algor_name(p_tab$method)
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+
+rob_cnk_score_tab<-apply(p_tab,2,get_score)
+cnk_rank_tab<-data.frame(method=rownames(rob_cnk_score_tab),cnk_score=rowMeans(rob_cnk_score_tab))
+# cnk_rank_tab<-data.frame(method=rownames(p_tab), embed_acc_full=rowMeans(rob_cnk_score_tab[,1:8]),embed_acc_2batch=rowMeans(rob_cnk_score_tab[,9:16]), cell_align_acc=rowMeans(rob_cnk_score_tab[,17:20]), rnk_auc=rank(-(rowMeans(rob_cnk_score_tab[,1:16])+rowMeans(rob_cnk_score_tab[,17:20]))))
+# soft_rank<- cnk_rank_tab %>% arrange(rnk_auc) %>% summarise(method=method)
+
+p_tab<-p_tab %>% arrange(desc(rowMeans(p_tab)))
+
+# ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Embedding Acc AUC (full data)",8),rep("Embedding Acc AUC (CITE+RNA)",8),rep("Cell alignment Acc AUC",4)))
+pheatmap::pheatmap(p_tab,cluster_rows = F,cluster_cols =F,show_rownames = T,show_colnames = T,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_robustness_cnk_heatmap.pdf",display_numbers = T,number_format = "%.2f",width = 5,height = 4)
+
+# 1.2.3 down
+mosaic_rna_adt_bmmc_down_rob1$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob1$s2d1,levels=c("10","25","50","75","100"))
+mosaic_rna_adt_bmmc_down_rob1$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob1$s3d6,levels=c("10","25","50","75","100"))
+
+down_tab1_pair_auc<- subset(mosaic_rna_adt_bmmc_down_rob1,s2d1=="100") %>% dplyr::group_by(method) %>%
+                   dplyr::summarise(AMI_pair_auc=calc_auc(AMI),AMI.l1_pair_auc=calc_auc(AMI.l1),
+                   graph_cLISI_pair_auc=calc_auc(graph_cLISI), graph_cLISI.l1_pair_auc=calc_auc(graph_cLISI.l1),
+                   )
+down_tab1_pair_down10<- subset(mosaic_rna_adt_bmmc_down_rob1,s2d1=="100" & s3d6=="10") %>%
+                    dplyr::summarise(method=method,
+                   AMI_pair_down10=AMI,AMI.l1_pair_down10=AMI.l1,
+                   graph_cLISI_pair_down10=graph_cLISI, graph_cLISI.l1_pair_down10=graph_cLISI.l1)
+
+
+down_tab1_unpair_auc<- subset(mosaic_rna_adt_bmmc_down_rob1,s3d6=="100") %>% dplyr::group_by(method) %>%
+                   dplyr::summarise(AMI_unpair_auc=calc_auc(AMI),AMI.l1_unpair_auc=calc_auc(AMI.l1),
+                   graph_cLISI_unpair_auc=calc_auc(graph_cLISI), graph_cLISI.l1_unpair_auc=calc_auc(graph_cLISI.l1)
+                   )
+
+down_tab1_unpair_down10<- subset(mosaic_rna_adt_bmmc_down_rob1,s3d6=="100"  & s2d1=="10") %>%
+                    dplyr::summarise(method=method,
+                   AMI_unpair_down10=AMI,AMI.l1_unpair_down10=AMI.l1,
+                   graph_cLISI_unpair_down10=graph_cLISI, graph_cLISI.l1_unpair_down10=graph_cLISI.l1)
+
+
+mosaic_rna_adt_bmmc_down_rob1_2$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob1_2$s2d1,levels=c("10","25","50","75","100"))
+mosaic_rna_adt_bmmc_down_rob1_2$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob1_2$s3d6,levels=c("10","25","50","75","100"))
+
+down_tab1_2_pair_auc<- subset(mosaic_rna_adt_bmmc_down_rob1_2,s2d1=="100") %>% dplyr::group_by(method) %>%
+                   dplyr::summarise(AMI_pair_auc=calc_auc(AMI),AMI.l1_pair_auc=calc_auc(AMI.l1),
+                   graph_cLISI_pair_auc=calc_auc(graph_cLISI), graph_cLISI.l1_pair_auc=calc_auc(graph_cLISI.l1)
+                   )
+down_tab1_2_pair_down10<- subset(mosaic_rna_adt_bmmc_down_rob1_2,s2d1=="100" & s3d6=="10") %>%
+                    dplyr::summarise(method=method,
+                   AMI_pair_down10=AMI,AMI.l1_pair_down10=AMI.l1,
+                   graph_cLISI_pair_down10=graph_cLISI, graph_cLISI.l1_pair_down10=graph_cLISI.l1)
+
+
+down_tab1_2_unpair_auc<- subset(mosaic_rna_adt_bmmc_down_rob1_2,s3d6=="100") %>% dplyr::group_by(method) %>%
+                   dplyr::summarise( AMI_unpair_auc=calc_auc(AMI),AMI.l1_unpair_auc=calc_auc(AMI.l1),
+                   graph_cLISI_unpair_auc=calc_auc(graph_cLISI), graph_cLISI.l1_unpair_auc=calc_auc(graph_cLISI.l1)
+                   )
+
+down_tab1_2_unpair_down10<- subset(mosaic_rna_adt_bmmc_down_rob1_2,s3d6=="100"  & s2d1=="10") %>%
+                    dplyr::summarise(method=method,AMI_unpair_down10=AMI,AMI.l1_unpair_down10=AMI.l1,
+                   graph_cLISI_unpair_down10=graph_cLISI, graph_cLISI.l1_unpair_down10=graph_cLISI.l1)
+
+
+mosaic_rna_adt_bmmc_down_rob2$s2d1<-factor(mosaic_rna_adt_bmmc_down_rob2$s2d1,levels=c("10","25","50","75","100"))
+mosaic_rna_adt_bmmc_down_rob2$s3d6<-factor(mosaic_rna_adt_bmmc_down_rob2$s3d6,levels=c("10","25","50","75","100"))
+
+down_tab2_pair_auc <- subset(mosaic_rna_adt_bmmc_down_rob2,s2d1=="100") %>% dplyr::group_by(method) %>%
+  dplyr::summarise(FOSCTTM_pair_auc=calc_auc(1-FOSCTTM), nearest_cell_celltype_pair_auc=calc_auc(nearest_cell_celltype),
+                     nearest_cell_celltype.l1_pair_auc=calc_auc(nearest_cell_celltype.l1),nearest_cell_barcode_pair_auc=calc_auc(nearest_cell_barcode))
+down_tab2_pair_down10 <- subset(mosaic_rna_adt_bmmc_down_rob2,s2d1=="100"  & s3d6=="10") %>%
+  dplyr::summarise(method=method, FOSCTTM_pair_down10=1-FOSCTTM, nearest_cell_celltype_pair_down10=nearest_cell_celltype,
+                     nearest_cell_celltype.l1_pair_down10=nearest_cell_celltype.l1,nearest_cell_barcode_pair_down10=nearest_cell_barcode)
+
+down_tab2_unpair_auc <- subset(mosaic_rna_adt_bmmc_down_rob2,s3d6=="100") %>% dplyr::group_by(method) %>%
+  dplyr::summarise(FOSCTTM_unpair_auc=calc_auc(1-FOSCTTM), nearest_cell_celltype_unpair_auc=calc_auc(nearest_cell_celltype),
+                     nearest_cell_celltype.l1_unpair_auc=calc_auc(nearest_cell_celltype.l1),nearest_cell_barcode_unpair_auc=calc_auc(nearest_cell_barcode))
+down_tab2_unpair_down10 <- subset(mosaic_rna_adt_bmmc_down_rob2,s3d6=="100" & s2d1=="10") %>% 
+  dplyr::summarise(method=method, FOSCTTM_unpair_down10=1-FOSCTTM, nearest_cell_celltype_unpair_down10=nearest_cell_celltype,
+                     nearest_cell_celltype.l1_unpair_down10=nearest_cell_celltype.l1,nearest_cell_barcode_unpair_down10=nearest_cell_barcode)
+
+## plot downsample and robustness summary heatmap
+
+p_tab<-Reduce(multi_merge,list(down_tab1_pair_auc,down_tab1_unpair_auc,down_tab1_pair_down10,down_tab1_unpair_down10))
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+
+rob_down_score_tab1<-apply(p_tab,2,get_score)
+rownames(rob_down_score_tab1)<-rownames(p_tab)
+
+down_rank_tab1<-data.frame(method=rownames(p_tab),
+                     rnk_pair_auc=rank(-rowMeans(rob_down_score_tab1[,c(1:4)])),
+                     rnk_unpair_auc=rank(-rowMeans(rob_down_score_tab1[,c(5:8)])),
+                     rnk_pair_down10_metric=rank(-rowMeans(rob_down_score_tab1[,c(9:12)])),
+                     rnk_unpair_down10_metric=rank(-rowMeans(rob_down_score_tab1[,c(13:16)]))) 
+
+soft_rank<- down_rank_tab1 %>% arrange(rnk_pair_auc+rnk_unpair_auc+rnk_pair_down10_metric+rnk_unpair_down10_metric) %>% summarise(method=method)
+p_tab<-p_tab[soft_rank[,1],]
+colnames(p_tab)<-map_metrics_name3(colnames(p_tab))
+
+# ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Paired data downsample AUC score",4),rep("Unpaired data downsample AUC score",4),rep("Metric score (paired data downsample to 10%)",4),rep("Metric score (unpaired data downsample to 10%)",4)))
+ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Pair down AUC score",4),rep("Unpair down AUC score",4),rep("Metric score (Pair down 10%)",4),rep("Metric score (Unpair down 10%)",4)))
+pheatmap::pheatmap(p_tab,annotation_col = ann_col,cluster_rows = F,cluster_cols =F,show_rownames = T,show_colnames = T,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_robustness_downsample_single_embed_3batch_heatmap.pdf",display_numbers = T,number_format = "%.2f",width = 11,height = 6)
+
+
+p_tab<-Reduce(multi_merge,list(down_tab1_2_pair_auc,down_tab1_2_unpair_auc,down_tab1_2_pair_down10,down_tab1_2_unpair_down10))
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+
+rob_down_score_tab1_2<-apply(p_tab,2,get_score)
+rownames(rob_down_score_tab1_2)<-rownames(p_tab)
+
+down_rank_tab1_2<-data.frame(method=rownames(p_tab),
+                     rnk_pair_auc=rank(-rowMeans(rob_down_score_tab1_2[,c(1:4)])),
+                     rnk_unpair_auc=rank(-rowMeans(rob_down_score_tab1_2[,c(5:8)])),
+                     rnk_pair_down10_metric=rank(-rowMeans(rob_down_score_tab1_2[,c(9:12)])),
+                     rnk_unpair_down10_metric=rank(-rowMeans(rob_down_score_tab1_2[,c(13:16)]))) 
+
+soft_rank<- down_rank_tab1_2 %>% arrange(rnk_pair_auc+rnk_unpair_auc+rnk_pair_down10_metric+rnk_unpair_down10_metric) %>% summarise(method=method)
+p_tab<-p_tab[soft_rank[,1],]
+colnames(p_tab)<-map_metrics_name3(colnames(p_tab))
+
+# ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Paired data downsample AUC score",4),rep("Unpaired data downsample AUC score",4),rep("Metric score (paired data downsample to 10%)",4),rep("Metric score (unpaired data downsample to 10%)",4)))
+
+ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Pair down AUC score",4),rep("Unpair down AUC score",4),rep("Metric score (Pair down 10%)",4),rep("Metric score (Unpair down 10%)",4)))
+pheatmap::pheatmap(p_tab,annotation_col = ann_col,cluster_rows = F,cluster_cols =F,show_rownames = T,show_colnames = T,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_robustness_downsample_single_embed_2batch_heatmap.pdf",display_numbers = T,number_format = "%.2f",width = 11,height = 6)
+
+
+p_tab<-Reduce(multi_merge,list(down_tab2_pair_auc,down_tab2_unpair_auc,down_tab2_pair_down10,down_tab2_unpair_down10))
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+
+rob_down_score_tab2<-apply(p_tab,2,get_score)
+rownames(rob_down_score_tab2)<-rownames(p_tab)
+
+down_rank_tab2<-data.frame(method=rownames(p_tab),
+                     rnk_pair_auc=rank(-rowMeans(rob_down_score_tab2[,c(1:4)])),
+                     rnk_unpair_auc=rank(-rowMeans(rob_down_score_tab2[,c(5:8)])),
+                     rnk_pair_down10_metric=rank(-rowMeans(rob_down_score_tab2[,c(9:12)])),
+                     rnk_unpair_down10_metric=rank(-rowMeans(rob_down_score_tab2[,c(13:16)]))) 
+soft_rank<- down_rank_tab2 %>% arrange(rnk_pair_auc+rnk_unpair_auc+rnk_pair_down10_metric+rnk_unpair_down10_metric) %>% summarise(method=method)
+p_tab<-p_tab[soft_rank[,1],]
+p_tab$FOSCTTM_pair_down10<- 1-p_tab$FOSCTTM_pair_down10
+p_tab$FOSCTTM_unpair_down10<- 1-p_tab$FOSCTTM_unpair_down10
+colnames(p_tab)<-map_metrics_name3(colnames(p_tab))
+
+# ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Paired data downsample AUC score",4),rep("Unpaired data downsample AUC score",4),rep("Metric score (paired data downsample to 10%)",4),rep("Metric score (unpaired data downsample to 10%)",4)))
+
+ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Pair down AUC score",4),rep("Unpair down AUC score",4),rep("Metric score (Pair down 10%)",4),rep("Metric score (Unpair down 10%)",4)))
+pheatmap::pheatmap(p_tab,annotation_col = ann_col,cluster_rows = F,cluster_cols =F,show_rownames = T,show_colnames = T,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_robustness_downsample_cross_embed_heatmap.pdf",display_numbers = T,number_format = "%.3f",width = 11,height = 6)
+
+
+
+# # Then plot summarized heatmap
+
+rob_down_score1<-data.frame(method=rownames(rob_down_score_tab1),
+                     down_pair_auc_single_embed_3batch=rowMeans(rob_down_score_tab1[,c(1:4)]),
+                     down_unpair_auc_single_embed_3batch=rowMeans(rob_down_score_tab1[,c(5:8)]),
+                     down_pair_down10_metric_single_embed_3batch=rowMeans(rob_down_score_tab1[,c(9:12)]),
+                     down_unpair_down10_single_embed_3batch=rowMeans(rob_down_score_tab1[,c(13:16)])) 
+
+rob_down_score1_2<-data.frame(method=rownames(rob_down_score_tab1_2),
+                     down_pair_auc_single_embed_2batch=rowMeans(rob_down_score_tab1_2[,c(1:4)]),
+                     down_unpair_auc_single_embed_2batch=rowMeans(rob_down_score_tab1_2[,c(5:8)]),
+                     down_pair_down10_metric_single_embed_2batch=rowMeans(rob_down_score_tab1_2[,c(9:12)]),
+                     down_unpair_down10_metric_single_embed_2batch=rowMeans(rob_down_score_tab1_2[,c(13:16)])) 
+
+rob_down_score2<-data.frame(method=rownames(rob_down_score_tab2),
+                     down_pair_auc_cross_embed=rowMeans(rob_down_score_tab2[,c(1:4)]),
+                     down_unpair_auc_cross_embed=rowMeans(rob_down_score_tab2[,c(5:8)]),
+                     down_pair_down10_metric_cross_embed=rowMeans(rob_down_score_tab2[,c(9:12)]),
+                     down_unpair_down10_metric_cross_embed=rowMeans(rob_down_score_tab2[,c(13:16)])) 
+
+
+
+mosaic_rna_adt_rob_summary<-Reduce(multi_merge,list(rob_down_score1, rob_down_score1_2, rob_down_score2,
+                                                         cnk_rank_tab))
+mosaic_rna_adt_rob_summary$down_auc<-(rowMeans(mosaic_rna_adt_rob_summary[,c(2,3,6,7)],na.rm = T)+rowMeans(mosaic_rna_adt_rob_summary[,c(10,11)],na.rm=T))/2
+mosaic_rna_adt_rob_summary$down10<-(rowMeans(mosaic_rna_adt_rob_summary[,c(4,5,8,9)],na.rm = T)+rowMeans(mosaic_rna_adt_rob_summary[,c(12,13)],na.rm=T))/2
+# mosaic_rna_adt_rob_summary$cnk_score<- (rowMeans(mosaic_rna_adt_rob_summary[,c(14,15)],na.rm = T)+mosaic_rna_adt_rob_summary[,16])/2
+# mosaic_rna_adt_rob_summary$rank <- (rank(-mosaic_rna_adt_rob_summary$down_auc) + rank(-mosaic_rna_adt_rob_summary$down10) +rank(-mosaic_rna_adt_rob_summary$cnk_score))/3
+mosaic_rna_adt_rob_summary<- data.frame(mosaic_rna_adt_rob_summary) %>% arrange(desc(cnk_score+down_auc+down10))
+# mosaic_rna_adt_rob_summary[c(7,8),20]<-c(NA,NA) # no sufficient metrics
+
+rownames(mosaic_rna_adt_rob_summary)<-mosaic_rna_adt_rob_summary[,1]
+mosaic_rna_adt_rob_summary<-mosaic_rna_adt_rob_summary[,-1]
+
+colnames(mosaic_rna_adt_rob_summary)<-c("Paired data downsample AUC of embedding acuuracy (full data)","Unpaired data downsample AUC of embedding acuuracy (full data)","Embedding acuuracy of paired data downsample to 10% (full data)","Embedding acuuracy of unpaired data downsample to 10% (full data)","Paired data downsample AUC of embedding acuuracy (CITE+RNA)","Unpaired data downsample AUC of embedding acuuracy (CITE+RNA)","Embedding acuuracy of paired data downsample to 10% (CITE+RNA)","Embedding acuuracy of unpaired data downsample to 10% (CITE+RNA)","Paired data downsample AUC of cell alignment accuracy","Unpaired data downsample AUC of cell alignment accuracy","Cell alignment accuracy of paired data downsample to 10","Cell alignment accuracy of unpaired data downsample to 10% ","Paired dataset size AUC summary","Downsample metrics AUC summary","Downsample to 10% metrics summary")
+# p_tab<-mosaic_rna_adt_rob_summary[,-19]
+p_tab<- mosaic_rna_adt_rob_summary[,c(1,2,5,6,9,10,3,4,7,8,11,12,13:15)]
+ann_col<-data.frame(row.names=colnames(p_tab),group=c(rep("Downsample AUC summary",6),rep("Downsample to 10% summary",6),"paired dataset size AUC summary","Downsample AUC summary","Downsample to 10% summary"))
+
+
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/mosaic_RNA+ADT/metric_heatmap/mosaic_RNA+ADT_robustness_summary_score_heatmap.pdf",cluster_rows = F,cluster_cols = F,show_rownames = T,show_colnames = T, display_numbers = T,annotation_col = ann_col,number_format = "%.2f",width=11,height = 7)
+
+# summary plot
+ 
+# plot summary table
+p_tab<-mosaic_rna_adt_rob_summary
+p_tab<-cbind(rownames(p_tab),p_tab)
+colnames(p_tab)[1]<- "method"
+p_tab$avg_rank<-(rank(-p_tab[,14])+rank(-p_tab[,15])+rank(-p_tab[,16]))/3
+p_tab_rank <- p_tab %>% arrange(avg_rank) %>% mutate(Rank=min_rank(avg_rank)) %>% select(Rank,everything())
+p_tab_rank<-p_tab_rank[,c(1:17)]
+mosaic_rna_adt_rob_row_info <- data.frame(id = p_tab_rank$method)
+mosaic_rna_adt_rob_column_info <- data.frame(id = colnames(p_tab_rank),
+                          group = c("Text","Text",
+                                    rep("Downsample AUC summary",6),
+                                    rep("Downsample to 10% summary",6),
+                                    rep("Paired dataset sizes AUC summary",1),
+                                    "Downsample AUC summary",
+                                    "Downsample to 10% summary"),
+                          geom = c(rep("text",2),
+                                   rep("circle",12),
+                                   rep("bar",3)),
+                          width = c(1.5,8.5,rep(2,15)),
+                          overlay = F)
+mosaic_rna_adt_rob_palettes <- list(   "Text" = "black",
+                    "Downsample AUC summary" = "Blues",
+                   "Downsample to 10% summary" = "Greens",
+                   "Paired dataset sizes AUC summary" = "Oranges"
+                   )
+# p_tab_rank$`Average rank`<-round(p_tab_rank$`Average rank`,2)
+# p_tab_rank$`Average rank`[is.na(p_tab_rank$`Average rank`)] <- "n.a."
+p_tab_rank$Rank[c(7,8)] <- "n.a."
+p<-plot_scmmib_summary(data = p_tab_rank,
+                       row_info = mosaic_rna_adt_rob_row_info,
+                       column_info =mosaic_rna_adt_rob_column_info,
+                       palettes = mosaic_rna_adt_rob_palettes,
+                       rank = TRUE,
+                       rect_normalize = T,
+                       extend_figure =T
+                       )
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/mosaic_RNA_ADT_robustness.pdf",width = 11, height = 7)
+
+# generate html input
+write.table(html_out(mosaic_rna_adt_bmmc_down_rob1[,c(1:17)],4:15),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+write.table(html_out(mosaic_rna_adt_bmmc_down_rob1_2[,c(1:17)],4:15),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_noADT_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+write.table(html_out(mosaic_rna_adt_bmmc_down_rob2[,c(1:5,8,11,14,15)],4:7),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_s2d1_s3d6_unpaired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+
+# write.table(html_out(mosaic_rna_adt_bmmc_cnk_rob1[,c(1:3,8:17)],4:11),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+# 
+# write.table(html_out(mosaic_rna_adt_bmmc_cnk_rob1_2),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_noADT_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+write.table(html_out(mosaic_rna_adt_bmmc_cnk_rob2[,c(1:3,6,9,12,13)],2:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/mosaic_scRNA+ADT_robustness_BMMC_c5k_cnk_unpaired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+```
+
+
+

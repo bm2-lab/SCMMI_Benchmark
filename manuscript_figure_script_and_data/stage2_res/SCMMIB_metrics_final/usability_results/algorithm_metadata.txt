@@ -1,0 +1,41 @@
+software	scRNA+scATAC	scRNA+ADT	Spatial scRNA+ADT	diagonal scRNA+scATAC	mosaic scRNA+scATAC	mosaic scRNA+ADT	batch parameter	 Imputation	Biological interpretability	source	GPU	Platform	journal	year
+LIGER iNMF				√						https://github.com/welch-lab/liger	no	R	Cell	2019
+Seurat v3 CCA				√						https://github.com/satijalab/seurat	no	R	Cell	2019
+Seurat v3 RPCA				√						https://github.com/satijalab/seurat	no	R	Cell	2019
+CiteFuse		√								https://github.com/SydneyBioX/CiteFuse	no	R	Bioinformatics	2020
+MOFA+	√	√							√	https://github.com/gtca/mofaplus-shiny	no	R	Genome Biology	2020
+scAI	√									https://github.com/sqjin/scAI	no	R	Genome Biology	2020
+unionCom				√						https://github.com/caokai1073/UnionCom	yes	python	Bioinformatics	2020
+cobolt	√				√	 	 			https://github.com/boyinggong/cobolt/blob/master/docs/tutorial.ipynb	yes	python	Genome Biology	2021
+DCCA	√							√		https://github.com/cmzuo11/DCCA	yes	python	Bioinformatics	2021
+GLUE				√						https://github.com/gao-lab/GLUE	yes	python	Nature Biotechnology	2021
+LIGER online iNMF				√						https://github.com/welch-lab/liger	no	R	Nature Biotechnology	2021
+scDEC	√									 https://github.com/kimmo1019/scDEC	yes	python	Nature machine intelligence	2021
+scMM	√	√								https://github.com/kodaim1115/scMM	yes	python	Cell Reports Methods	2021
+scMVAE	√							√		https://github.com/cmzuo11/scMVAE	yes	python	Briefings in Bioinformatics	2021
+Seurat v4 WNN	√	√								https://github.com/satijalab/seurat	no	R	Cell	2021
+totalVI		√				√	√	√	√	https://scvi-tools.org/	yes	python	Nature Methods	2021
+MultiMAP	 		√	√						https://github.com/Teichlab/MultiMAP	no	python	Genome Biology	2021
+bindSC		√		√						https://github.com/KChen-lab/bindSC	no	R	Genome Biology	2022
+LIGER UINMF				√						https://github.com/welch-lab/liger	no	R	Nature Communications	2022
+Multigrate	√	√			√	√	√			https://github.com/theislab/multigrate	yes	python	bioRxiv	2022
+Pamona				√						https://github.com/caokai1073/Pamona	no	python	Bioinformatics	2022
+SAILERX	√							√		https://github.com/uci-cbcl/SAILERX	yes	python	Nucleic Acids Research	2022
+SCALEX		√		√				√		https://github.com/jsxlei/SCALEX	yes	python	Nature Communications	2022
+sciPENN		√				√	√	√		https://github.com/jlakkis/sciPENN	yes	python	Nature machine intelligence	2022
+scMDC	√	√								https://github.com/xianglin226/scMDC	yes	python	Nature Communications	2022
+scMVP	√							√		https://github.com/bm2-lab/scMVP	yes	python	Genome Biology	2022
+uniPort	√			√						https://github.com/caokai1073/uniPort	yes	python	Nature Communications	2022
+scVAEIT					√	√		√		https://github.com/jaydu1/scVAEIT	yes	python	PNAS	2022
+MEFISTO			√							https://biofam.github.io/MOFA2/MEFISTO	no	R	Nature Methods	2022
+DeepMAPS	√	√						√	√	https://github.com/OSU-BMBL/deepmaps	yes	python	Nature communications	2023
+GCN-SC				√						https://github.com/YuBinLab-QUST/GCN-SC	yes	python	Briefings in Bioinformatics	2023
+MaxFuse		√		√						https://github.com/shuxiaoc/maxfuse	no	python	Nature Biotechnology	2023
+MultiVI	√				√	 	√	√		https://scvi-tools.org/	yes	python	Nature Methods	2023
+scMCs	√									www.sdu-idea.cn/codes.php?name=ScMCs	yes	python	Bioinformatics	2023
+SIMBA				√						https://github.com/pinellolab/simba	no	python	Nature Methods	2023
+Seurat v5 bridge					√	√				https://satijalab.org/seurat/	no	R	Nature Methods	2023
+StabMap	 	 			√	√		KNN		https://github.com/MarioniLab/StabMap	no	R	Nature Methods	2023
+scMoMaT					√	√				https://github.com/PeterZZQ/scMoMaT	yes	python	Nature communications	2023
+SpatialGlue			√							https://github.com/JinmiaoChenLab/SpatialGlue	yes	python	bioRxiv	2023
+MIDAS					√	√		√		https://github.com/labomics/midas	yes	python	Nature Biotechnology	2024

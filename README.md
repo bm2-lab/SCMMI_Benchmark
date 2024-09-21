@@ -6,10 +6,10 @@
 
 SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
 
-- This folder contains project introduction and reproducibility code for stage 2 project. The stage 1 scripts are archived in [stage1](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1)
+- This folder contains project introduction and reproducibility code for stage 2 project. The stage 1 scripts are archived in [stage1](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1).
 
 - Our website for benchmark results visualization is available at [SCMMIB_website]()
-- For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline)
+- For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
 
 ### SCMMIB workflow
 ![Workflow](imgs/Wrokflow.png)

@@ -1,0 +1,10 @@
+,method,Output,nCell,graph_connectivity,ARI,AMI,graph_cLISI
+0,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_1/run_harmony/harmony,Embedding,3484.0,0.8765351506772314,0.1918404912035248,0.3140432174231266,0.863084474551936
+1,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_1/run_mefisto/mefisto,Embedding,3484.0,0.7428060606171767,0.158362929130275,0.3116567794674215,0.8830606720771431
+2,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_1/run_multimap/multimap,Embedding,3484.0,0.6304133864953287,0.1219440093128795,0.2514002858706687,0.8785278823783259
+3,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_1/run_spglue/spglue,Embedding,3484.0,0.7863172840447047,0.2201237835528954,0.320068862120669,0.8846519050165728
+4,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_1/run_staligner/staligner,Embedding,3484.0,0.9075138469941488,0.1628276182358458,0.3448818775020811,0.8895959943662698
+5,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_2/run_spglue/spglue,Embedding,3484.0,0.7863172840447047,0.2201237835528954,0.320068862120669,0.8846519050165728
+6,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_3/run_spglue/spglue,Embedding,3484.0,0.7863172840447047,0.2201237835528954,0.320068862120669,0.8846519050165728
+7,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_4/run_spglue/spglue,Embedding,3484.0,0.7863172840447047,0.2201237835528954,0.320068862120669,0.8846519050165728
+8,/home/wsg/BM/results/task/spatial_scRNA+ADT/accuracy/lymph_node_A1/rep_5/run_spglue/spglue,Embedding,3484.0,0.7863172840447047,0.2201237835528954,0.320068862120669,0.8846519050165728

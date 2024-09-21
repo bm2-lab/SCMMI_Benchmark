@@ -1,0 +1,878 @@
+```{r}
+library(pheatmap)
+library(dplyr)
+# library(funkyheatmap)
+library(tibble)
+library(ggimage)
+library(RColorBrewer)
+library(ggsci)
+# library(plyr)
+library(stringr)
+library(tidyr)
+library(reshape2)
+
+my_col_bench<- pal_d3(palette = "category20", alpha = 1)(14)
+
+mytemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(colour = "black"),axis.text.y =element_text(colour = "black"),
+              axis.title.y=element_text(colour = "black"))
+
+widetemp<-theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.major =element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black",size=0.5),axis.text.x = element_text(angle = 30,size = 12,hjust = 1,colour = "black"),axis.text.y =element_text(size = 12,colour = "black"),
+                axis.title.y=element_text(size=12,colour = "black"),legend.text=element_text(size=12))
+
+rect_temp<-theme_bw()+theme(panel.background=element_rect(fill="white",colour=NA), panel.grid.minor = element_blank(), panel.grid.major =element_blank(),axis.text.y =element_text(colour = "black"), axis.title.y=element_text(colour = "black"))
+
+basecol<-function(n){
+  colall<-c('#d7191c','#31a354','#756bb1','#0571b0','#d95f0e','#bdbdbd')
+  return(colall[c(1:n)])
+}
+
+source("../plot_scmmib_table.r")
+```
+
+
+
+
+## 1.2 pair RNA+ADT accuracy
+```{r}
+pair_rna_adt_bmmc_p10_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_BMMC_p10_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_bmmc_s2d1_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_BMMC_s2d1_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+
+pair_rna_adt_hspc_p10_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_HSPC_p10_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_wbc_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_WBC_RawData_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_covid_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_COVID19_RawData_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_10xNSCLC_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_10xNSCLC_RawData_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_10xkidney_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_10xKidneyCancer_RawData_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_lymph_a1_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_lymph_node_A1_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+pair_rna_adt_lymph_acc<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_lymph_node_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+
+get_score<-function(x){
+  return((x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T)))
+}
+
+
+# map_algor_name<-function(raw_name){
+#   return(plyr::mapvalues(raw_name, from = c("bindSC-louvain","cobolt-louvain","MaxFuse-louvain","MOFA2-louvain","multigrate-louvain","multivi-louvain","scAI-louvain","scDEC-louvain","scMDC-louvain","multigrate_batch-louvain","SCALEX-louvain","SeuratV4-louvain","uniPort-louvain","uniProt-louvain","CiteFuse-louvain","sciPENN-louvain","sciPENN_batch-louvain","totalVI-louvain","totalVI_batch-louvain"),
+#                          to=c("bindSC","cobolt","MaxFuse","MOFA+","Multigrate","MultiVI","scAI","scDEC","scMDC","Multigrate Batch","SCALEX","Seurat v4 WNN","uniPort","uniPort","CiteFuse","sciPENN","sciPENN Batch","totalVI","totalVI Batch")))
+# }
+
+map_algor_name<-function(raw_name){
+  return(plyr::mapvalues(gsub("-louvain","",raw_name), from = c("bindSC","cobolt","MaxFuse","MOFA2","multigrate","multivi","scAI","scDEC","scMDC","multigrate_batch","SCALEX","SeuratV4","uniPort","uniProt","CiteFuse","sciPENN","sciPENN_batch","totalVI","totalVI_batch"),
+                         to=c("bindSC","cobolt","MaxFuse","MOFA+","Multigrate","MultiVI","scAI","scDEC","scMDC","Multigrate(batch)","SCALEX","Seurat v4 WNN","uniPort","uniPort","CiteFuse","sciPENN","sciPENN(batch)","totalVI","totalVI(batch)")))
+}
+
+map_metrics_name<-function(raw_name){
+  return(plyr::mapvalues(raw_name, from = c("Batch_ASW_batch","Batch_ASW_site","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1","bio_cons_score","batch_rm_score","final_score"), to=c("Batch ASW batch","Batch ASW site","graph connectivity","graph connectivity level 1","graph iLISI","ARI","ARI level 1","AMI","AMI level 1","graph cLISI","graph cLISI level 1","isolated labels ASW","isolated labels ASW level 1","Bio conservation score","Batch removal score","Overall score")))
+}
+
+map_metrics_name2<-function(raw_name){
+  metric1<-c("Batch_ASW_batch","Batch_ASW_site","graph_connectivity","graph_connectivity.l1","graph_iLISI","ARI","ARI.l1","AMI","AMI.l1","graph_cLISI","graph_cLISI.l1","isolated_labels_ASW","isolated_labels_ASW.l1")
+  metric2<-c("Batch ASW batch","Batch ASW site","graph connectivity","graph connectivity level 1","graph iLISI","ARI","ARI level 1","AMI","AMI level 1","graph cLISI","graph cLISI level 1","isolated labels ASW","isolated labels ASW level 1")
+  metric_in<- c(paste(metric1,"RNA",sep="_"),paste(metric1,"ADT",sep="_"),paste(metric1,"Both",sep="_"))
+  metric_out<- c(paste(metric2,"RNA",sep=" "),paste(metric2,"ADT",sep=" "),paste(metric2,"Both",sep=" "))
+  return(plyr::mapvalues(raw_name, from =metric_in , to=metric_out))
+}
+
+map_dataset_name<-function(raw_name){
+  return(plyr::mapvalues(raw_name,from = c("BMMC_p10_bio_cons","BMMC_s2d1_bio_cons","Spatial_lymph_bio_cons","BMMC_p10_batch_rm","HSPC_p10_batch_rm","Spatial_lymph_batch_rm","COVID19_batch_rm","WBC_batch_rm","NSCLC_batch_rm","Kidney_batch_rm","bio_cons_score","batch_rm_score","final_score"),to =c("BMMC CITE p10 Bio conservation","BMMC CITE s2d1 Bio conservation","Lymph node spatial Bio conservation","BMMC CITE p10 Batch removal","HSPC CITE p10 Batch removal","Lymph node spatial Batch removal","COVID19 Batch removal","WBC Batch removal","NSCLC Batch removal","Kidney Batch removal","Bio conservation score","Batch removal score","Overall score") ))
+}
+
+
+gpu_tools <- c("unionCom","cobolt","DCCA","GLUE","scDEC","scMM","scMVAE","totalVI","Multigrate","SCALEX","sciPENN","scMDC","scMVP","uniPort","scVAEIT","DeepMAPS","MultiVI","scMoMaT","SpatialGlue","MIDAS")
+cpu_tools <- c("LIGER iNMF","Seurat v3 CCA","Seurat v4 RPCA","CiteFuse","MOFA+","scAI","LIGER online iNMF","Seurat v4 WNN","MultiMAP","bindSC","LIGER UINMF","Pamona","MEFISTO","MaxFuse","SIMBA","Seurat v5 bridge","StabMap")
+
+
+
+# 先准备各数据集avg结果便于后续排序。
+
+
+pair_rna_adt_bmmc_p10_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_bmmc_p10_acc[,1]))
+pair_rna_adt_bmmc_p10_acc<-subset(pair_rna_adt_bmmc_p10_acc,algor!="totalVI(batch)" & algor!="Multigrate(batch)"  & algor!="sciPENN(batch)")
+pair_rna_adt_bmmc_s2d1_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_bmmc_s2d1_acc[,1]))
+pair_rna_adt_wbc_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_wbc_acc[,1]))
+pair_rna_adt_hspc_p10_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_hspc_p10_acc[,1]))
+pair_rna_adt_covid_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_covid_acc[,1]))
+pair_rna_adt_lymph_a1_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_lymph_a1_acc[,1]))
+pair_rna_adt_lymph_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_lymph_acc[,1]))
+pair_rna_adt_10xNSCLC_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_10xNSCLC_acc[,1]))
+pair_rna_adt_10xkidney_acc$algor<-map_algor_name(gsub("-louvain","",pair_rna_adt_10xkidney_acc[,1]))
+
+
+pair_rna_adt_bmmc_p10_acc_avg<- pair_rna_adt_bmmc_p10_acc %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),Batch_ASW_site=median(Batch_ASW_site),graph_connectivity=median(graph_connectivity),graph_iLISI=median(graph_iLISI),ARI=median(ARI),AMI=median(AMI),graph_cLISI=median(graph_cLISI),isolated_labels_ASW=median(isolated_labels_ASW),ARI.l1=median(ARI.l1),AMI.l1=median(AMI.l1),graph_cLISI.l1=median(graph_cLISI.l1),isolated_labels_ASW.l1=median(isolated_labels_ASW.l1),graph_connectivity.l1=median(graph_connectivity.l1))
+
+pair_rna_adt_bmmc_s2d1_acc_avg<- pair_rna_adt_bmmc_s2d1_acc %>% dplyr::group_by(algor) %>% dplyr::summarise(ARI=median(ARI),AMI=median(AMI),graph_cLISI=median(graph_cLISI),ARI.l1=median(ARI.l1),AMI.l1=median(AMI.l1),graph_cLISI.l1=median(graph_cLISI.l1))
+
+
+pair_rna_adt_wbc_acc_avg<-pair_rna_adt_wbc_acc  %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+pair_rna_adt_hspc_p10_acc_avg <-pair_rna_adt_hspc_p10_acc  %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+pair_rna_adt_covid_acc_avg <-pair_rna_adt_covid_acc  %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+pair_rna_adt_lymph_a1_acc_avg <-pair_rna_adt_lymph_a1_acc  %>% dplyr::group_by(algor)  %>%
+  filter( !str_detect(algor,"louvain"))  %>% 
+  dplyr::summarise(ARI=median(ARI),AMI=median(AMI),graph_cLISI=median(graph_cLISI))
+
+pair_rna_adt_lymph_acc_avg <-pair_rna_adt_lymph_acc  %>% dplyr::group_by(algor) %>%
+  filter( !str_detect(algor,"louvain"))  %>% 
+  dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+pair_rna_adt_10xNSCLC_acc_avg <-pair_rna_adt_10xNSCLC_acc  %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+pair_rna_adt_10xkidney_acc_avg <-pair_rna_adt_10xkidney_acc  %>% dplyr::group_by(algor) %>% dplyr::summarise(Batch_ASW_batch=median(Batch_ASW_batch),graph_iLISI=median(graph_iLISI))
+
+
+
+p_tab<-pair_rna_adt_hspc_p10_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_hspc_p10_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("HSPC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_HSPC_p10_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_hspc_p10_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_hspc_p10_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("HSPC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_HSPC_p10_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+
+
+## BMMC p10
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(ARI)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(ARI) %>%
+  arrange(ARI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=ARI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("ARI")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_ARI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(AMI)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(AMI) %>% 
+  arrange(AMI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=AMI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("AMI")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_AMI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW Batch")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_Batch_ASW_batch_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(Batch_ASW_site)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(Batch_ASW_site) %>% 
+  arrange(Batch_ASW_site)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_site))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW Site")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_Batch_ASW_site_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(graph_connectivity)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(graph_connectivity) %>%
+  arrange(graph_connectivity)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_connectivity))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph Connectivity")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_graph_connectivity_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(graph_iLISI) %>% 
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(graph_cLISI)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(graph_cLISI) %>% 
+  arrange(graph_cLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_cLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph cLISI")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_graph_cLISI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(isolated_labels_ASW)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(isolated_labels_ASW) %>% 
+  arrange(isolated_labels_ASW)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=isolated_labels_ASW))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Isolated Labels ASW")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_isolated_labels_ASW_boxplot.pdf",height=5,width=3)
+
+# BMMC level 1 metrics.
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(graph_cLISI.l1)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(graph_cLISI.l1) %>% 
+  arrange(graph_cLISI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_cLISI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph cLISI level 1")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_graph_cLISI.l1_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(isolated_labels_ASW.l1)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(isolated_labels_ASW.l1) %>% 
+  arrange(isolated_labels_ASW.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=isolated_labels_ASW.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Isolated Labels ASW level 1")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_isolated_labels_ASW.l1_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(graph_connectivity.l1)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(graph_connectivity.l1) %>%
+  arrange(graph_connectivity.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_connectivity.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph Connectivity level 1")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_graph_connectivity.l1_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(ARI.l1)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(ARI.l1) %>%
+  arrange(ARI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=ARI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("ARI level 1")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_ARI.l1_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_p10_acc %>% drop_na(AMI.l1)
+label_median <- pair_rna_adt_bmmc_p10_acc_avg %>% drop_na(AMI.l1) %>% 
+  arrange(AMI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=AMI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("AMI level 1")+ggtitle("BMMC p10")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_p10_AMI.l1_boxplot.pdf",height=5,width=3)
+
+# BMMC s2d1
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(ARI)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(ARI) %>%
+  arrange(ARI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=ARI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("ARI")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_ARI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(AMI)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(AMI) %>% 
+  arrange(AMI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=AMI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("AMI")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_AMI_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(graph_cLISI)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(graph_cLISI) %>% 
+  arrange(graph_cLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_cLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph cLISI")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_graph_cLISI_boxplot.pdf",height=5,width=3)
+
+# BMMC level 1 metrics.
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(graph_cLISI.l1)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(graph_cLISI.l1) %>% 
+  arrange(graph_cLISI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_cLISI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph cLISI level 1")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_graph_cLISI.l1_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(ARI.l1)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(ARI.l1) %>%
+  arrange(ARI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=ARI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("ARI level 1")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_ARI.l1_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_bmmc_s2d1_acc %>% drop_na(AMI.l1)
+label_median <- pair_rna_adt_bmmc_s2d1_acc_avg %>% drop_na(AMI.l1) %>% 
+  arrange(AMI.l1)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=AMI.l1))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("AMI level 1")+ggtitle("BMMC s2d1")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_BMMC_s2d1_AMI.l1_boxplot.pdf",height=5,width=3)
+
+# lymph node A1
+
+p_tab<-pair_rna_adt_lymph_a1_acc %>% drop_na(ARI)  %>% filter( !str_detect(algor,"louvain")) 
+label_median <- pair_rna_adt_lymph_a1_acc_avg %>% drop_na(ARI) %>%
+  arrange(ARI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=ARI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("ARI")+ggtitle("Spatial lymph node")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_lymph_A1_ARI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_lymph_a1_acc %>% drop_na(AMI)  %>% filter( !str_detect(algor,"louvain")) 
+label_median <- pair_rna_adt_lymph_a1_acc_avg %>% drop_na(AMI) %>% 
+  arrange(AMI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=AMI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("AMI")+ggtitle("Spatial lymph node")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_lymph_A1_AMI_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_lymph_a1_acc %>% drop_na(graph_cLISI)  %>% filter( !str_detect(algor,"louvain")) 
+label_median <- pair_rna_adt_lymph_a1_acc_avg %>% drop_na(graph_cLISI) %>% 
+  arrange(graph_cLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_cLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("graph cLISI")+ggtitle("Spatial lymph node")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_lymph_A1_graph_cLISI_boxplot.pdf",height=5,width=3)
+
+# spatial lymph node batch
+
+p_tab<-pair_rna_adt_lymph_acc %>% drop_na(Batch_ASW_batch) %>% filter( !str_detect(algor,"louvain")) 
+label_median <- pair_rna_adt_lymph_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)  
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("Spatial lymph node")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_lymph_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_lymph_acc %>% drop_na(graph_iLISI)  %>% filter( !str_detect(algor,"louvain")) 
+label_median <- pair_rna_adt_lymph_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("Spatial lymph node")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_lymph_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+# WBC
+p_tab<-pair_rna_adt_wbc_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_wbc_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("White blood cell")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_WBC_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_wbc_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_wbc_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("White blood cell")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_WBC_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_covid_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_covid_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("COVID19")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_COVID19_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_covid_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_covid_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("COVID19")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_COVID19_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_10xkidney_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_10xkidney_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("10X Kidney Cancer")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_10xKidneyCancer_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_10xkidney_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_10xkidney_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("10X Kidney Cancer")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_10xKidneyCancer_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+
+p_tab<-pair_rna_adt_10xNSCLC_acc %>% drop_na(Batch_ASW_batch)
+label_median <- pair_rna_adt_10xNSCLC_acc_avg %>% drop_na(Batch_ASW_batch) %>%
+  arrange(Batch_ASW_batch)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=Batch_ASW_batch))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("BatchASW")+ggtitle("10X NSCLC")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_10xNSCLC_Batch_ASW_boxplot.pdf",height=5,width=3)
+
+p_tab<-pair_rna_adt_10xNSCLC_acc %>% drop_na(graph_iLISI)
+label_median <- pair_rna_adt_10xNSCLC_acc_avg %>% drop_na(graph_iLISI) %>%
+  arrange(graph_iLISI)
+p_tab$algor<-factor(p_tab$algor,levels = label_median$algor)
+p<-ggplot(p_tab,aes(x=algor,y=graph_iLISI))+geom_boxplot(width=0.7)+coord_flip()+rect_temp+xlab(NULL)+ylab("Graph iLISI")+ggtitle("10X NSCLC")
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_10xNSCLC_graph_iLISI_boxplot.pdf",height=5,width=3)
+
+
+# compute metric correlation with shared benchmark algorithms. 
+share_algor <- pair_rna_adt_covid_acc_avg$algor # largest datasets
+
+merge_metric_mat<-function(metric_mats, prefixs, share_algor){
+  out_tmp <- NA
+  for (i in c(1:length(prefixs))){
+    mat <- subset(metric_mats[[i]],algor %in% share_algor)[,-1]
+    colnames(mat)<-paste(colnames(mat),sep="_",prefixs[i])
+    if (sum(is.na(out_tmp))==1){
+      out_tmp<-mat
+    }else{
+      print(prefixs[i])
+      print(nrow(mat))
+      out_tmp<-cbind(out_tmp, mat)
+    }
+  }
+  return(out_tmp)
+}
+
+# metrics_merged <- merge_metric_mat(metric_mats=list(pair_rna_adt_bmmc_p10_acc_avg,pair_rna_adt_lymph_a1_acc_avg,pair_rna_adt_hspc_p10_acc_avg, pair_rna_adt_wbc_acc_avg, pair_rna_adt_covid_acc_avg, pair_rna_adt_10xkidney_acc_avg, pair_rna_adt_10xNSCLC_acc_avg,pair_rna_adt_lymph_acc_avg),prefixs=c("BMMC_p10","Spatial lymph node A1","HSPC_p10","White_blood_cell","COVID19_PBMC","10X_kidney_cancer","10X_NSCLC","Spatial lymph node"),share_algor=share_algor)
+
+
+# Then summarize metrics for all datasets
+BMMC_p10_bio_cons<-data.frame(
+  BMMC_p10_bio_cons=rowMeans(apply(pair_rna_adt_bmmc_p10_acc_avg[,c(6:13)],2, get_score),na.rm = T),
+  algor=pair_rna_adt_bmmc_p10_acc_avg$algor
+)
+
+BMMC_p10_batch_rm<-data.frame(
+  BMMC_p10_batch_rm=rowMeans(apply(pair_rna_adt_bmmc_p10_acc_avg[,c(2:5,14)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_bmmc_p10_acc_avg$algor
+)
+
+BMMC_s2d1_bio_cons<-data.frame(
+  BMMC_s2d1_bio_cons=rowMeans(apply(pair_rna_adt_bmmc_s2d1_acc_avg[,c(2:7)],2, get_score),na.rm = T),
+  algor=pair_rna_adt_bmmc_s2d1_acc_avg$algor
+)
+
+Spatial_lymph_bio_cons<-data.frame(
+  Spatial_lymph_bio_cons=rowMeans(apply(pair_rna_adt_lymph_a1_acc_avg[,c(2:4)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_lymph_a1_acc_avg$algor
+)
+
+Spatial_lymph_batch_rm<-data.frame(
+  Spatial_lymph_batch_rm=rowMeans(apply(pair_rna_adt_lymph_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_lymph_acc_avg$algor
+)
+
+HSPC_p10_batch_rm<-data.frame(
+  HSPC_p10_batch_rm=rowMeans(apply(pair_rna_adt_hspc_p10_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_hspc_p10_acc_avg$algor
+)
+
+COVID19_batch_rm<-data.frame(
+  COVID19_batch_rm=rowMeans(apply(pair_rna_adt_covid_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_covid_acc_avg$algor
+)
+
+WBC_batch_rm<-data.frame(
+  WBC_batch_rm=rowMeans(apply(pair_rna_adt_wbc_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_wbc_acc_avg$algor
+)
+
+NSCLC_batch_rm<-data.frame(
+  NSCLC_batch_rm=rowMeans(apply(pair_rna_adt_10xNSCLC_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_10xNSCLC_acc_avg$algor
+)
+
+Kidney_batch_rm<-data.frame(
+  Kidney_batch_rm=rowMeans(apply(pair_rna_adt_10xkidney_acc_avg[,c(2,3)],2, get_score),na.rm=T),
+  algor=pair_rna_adt_10xkidney_acc_avg$algor
+)
+
+multi_merge<-function(x,y,id="algor"){
+  merge(x,y,by=id,all=T)
+}
+
+#
+pair_rna_adt_metric_score_summary<-Reduce(multi_merge,list(BMMC_p10_bio_cons, BMMC_s2d1_bio_cons, Spatial_lymph_bio_cons, BMMC_p10_batch_rm, HSPC_p10_batch_rm, Spatial_lymph_batch_rm, COVID19_batch_rm, WBC_batch_rm, NSCLC_batch_rm, Kidney_batch_rm))
+
+# pair_rna_adt_metric_score_summary <- pair_rna_adt_metric_score_summary %>% 
+#                                          filter( !str_detect(algor,"Batch")) %>%
+#                                          filter( !str_detect(algor,"louvain")) 
+
+# score_summary_cor<-cor(na.omit(pair_rna_adt_metric_score_summary[,-1]))
+# 
+# rownames(score_summary_cor) <- map_dataset_name(rownames(score_summary_cor))
+# colnames(score_summary_cor)<-rownames(score_summary_cor)
+# pheatmap(score_summary_cor,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_metric_summary_cor_heatmap.pdf",cluster_rows = T,cluster_cols = T,show_rownames = T,show_colnames = T, display_numbers = T,number_format = "%.2f",width=8,height = 7)
+
+
+
+#
+pair_rna_adt_metric_score_summary$bio_cons_score<- rowMeans(pair_rna_adt_metric_score_summary[,c(2:4)],na.rm = T)
+pair_rna_adt_metric_score_summary$batch_rm_score<-  rowMeans(pair_rna_adt_metric_score_summary[,c(5:11)],na.rm = T)
+# pair_rna_adt_metric_score_summary$final_score<- 0.5*pair_rna_adt_metric_score_summary$bio_cons_score +
+#                                                 0.5*pair_rna_adt_metric_score_summary$batch_rm_score
+ 
+
+pair_rna_adt_metric_score_summary <- pair_rna_adt_metric_score_summary %>% arrange(by=-(bio_cons_score+batch_rm_score) )
+rownames(pair_rna_adt_metric_score_summary)<-pair_rna_adt_metric_score_summary[,1]
+p_tab<-pair_rna_adt_metric_score_summary[,-1]
+colnames(p_tab)<-map_dataset_name(colnames(p_tab))
+ann_col<-data.frame(row.names=colnames(p_tab),type=c(rep("Bio Conservation",3),rep("Batch removal",7),rep("Ranking",2)))
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_metric_summary_score_heatmap.pdf",cluster_rows = F,cluster_cols = F,show_rownames = T,show_colnames = T, display_numbers = T,annotation_col = ann_col,number_format = "%.2f",width=9,height = 6)
+
+
+# plot summary table
+p_tab<-pair_rna_adt_metric_score_summary
+
+out_latent<-pair_rna_adt_bmmc_p10_acc[,c(2,17)]
+out_latent<-out_latent[!duplicated(out_latent),]
+p_tab<-merge(out_latent,pair_rna_adt_metric_score_summary,by="algor")
+colnames(p_tab)[1]<- "method"
+p_tab_rank <- p_tab %>% mutate(Rank=min_rank(desc(rank(bio_cons_score)+rank(batch_rm_score)))) %>% arrange(Rank)  %>% select(Rank,everything())
+
+colnames(p_tab_rank)<- map_dataset_name(colnames(p_tab_rank))
+cite_acc_row_info <- data.frame(id = p_tab_rank$method)
+cite_acc_column_info <- data.frame(id = colnames(p_tab_rank),
+                          group = c("Text","Text","Text",
+                                    rep("Biological conservation", 3),
+                                    rep("Batch removal", 7), 
+                                    "Biological conservation",
+                                    "Batch removal"
+                                    ), 
+                          geom = c(rep("text",3),
+                                   rep("circle",10),
+                                   rep("bar",2)),
+                          width = c(1.5,6.5,rep(2,13)),
+                          overlay = F)
+cite_acc_palettes <- list(   "Text" = "black",
+                    "Biological conservation" = "Blues",
+                   "Batch removal" = "Greens"
+                   )
+p<-plot_scmmib_summary(data = p_tab_rank,
+                       row_info = cite_acc_row_info,
+                       column_info =cite_acc_column_info,
+                       palettes = cite_acc_palettes,
+                       rank = TRUE,
+                       rect_normalize = T
+                       )
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_accuracy.pdf",device=cario_pdf,width = 230, height = 157, units = "mm")
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_accuracy.pdf",width = 10, height =8)
+
+
+
+# calculate the CV (Coefficient of Variation) for algorithms with random sampling output
+metric_cols<-colnames(pair_rna_adt_bmmc_p10_acc)[4:17]
+calc_cv<-function(data,sel_cols=metric_cols){
+  data2 <-data[,intersect(sel_cols,colnames(data))]
+  out<-data2 %>% group_by(algor) %>% summarise(across(.cols=everything(),.fns=cv)) %>% melt()
+  return(out)
+}
+calc_sd<-function(data,sel_cols=metric_cols){
+  data2 <-data[,intersect(sel_cols,colnames(data))]
+  out<-data2 %>% group_by(algor) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
+  return(out)
+}
+
+cv_output<-c()
+for (pair_data in list(pair_rna_adt_bmmc_p10_acc,pair_rna_adt_bmmc_s2d1_acc[,c(9:14,17)],pair_rna_adt_wbc_acc[,c(2,4,11)],pair_rna_adt_hspc_p10_acc[,c(2,4,11)],pair_rna_adt_covid_acc[,c(2,5,12)],pair_rna_adt_lymph_a1_acc,pair_rna_adt_lymph_acc,pair_rna_adt_10xNSCLC_acc,pair_rna_adt_10xkidney_acc)){
+  cv_output<-rbind(cv_output,calc_cv(pair_data,metric_cols))
+}
+
+cv_output<-subset(cv_output,abs(value)>0 | algor %in% gpu_tools )
+cv_output<- cv_output %>% filter( !str_detect(algor,"Batch")) %>%
+                                         filter( !str_detect(algor,"louvain"))
+
+p<- ggplot(cv_output, aes(x=algor,y=abs(value),col=algor))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+rect_temp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Absolute coefficient of Variation")+xlab(NULL)+ylim(c(0,0.3))+coord_flip()
+ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_algorithm_cv_robust.pdf",width=4,height=4.5)
+
+
+sd_output<-c()
+for (pair_data in list(pair_rna_adt_bmmc_p10_acc,pair_rna_adt_bmmc_s2d1_acc,pair_rna_adt_wbc_acc,pair_rna_adt_hspc_p10_acc,pair_rna_adt_covid_acc,pair_rna_adt_lymph_a1_acc,pair_rna_adt_lymph_acc,pair_rna_adt_10xNSCLC_acc,pair_rna_adt_10xkidney_acc)){
+  sd_output<-rbind(sd_output,calc_sd(pair_data,metric_cols))
+}
+
+sd_output<-subset(sd_output,abs(value)>0 | algor %in% gpu_tools)
+sd_output<- sd_output %>% filter( !str_detect(algor,"Batch")) %>%
+                                         filter( !str_detect(algor,"louvain"))
+
+p<- ggplot(sd_output, aes(x=algor,y=abs(value),col=algor))+geom_boxplot(width=0.7)+geom_jitter(width=0.2,size=0.5)+rect_temp+scale_color_manual(NULL,values=my_col_bench)  +ylab("Standard deviation")+xlab(NULL)+coord_flip()
+ggplot2::ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_boxplot/pair_RNA+ADT_algorithm_sd_robust.pdf",width=4,height=4.5)
+
+# compare algorithms with batch option
+algor_batch_compare<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/accuracy/scRNA+ADT_accuracy_BMMC_p10_paired_metrics_summary.csv",sep=",",header = T,row.names = 1)
+
+algor_batch_compare$method <- map_algor_name(gsub("-louvain","",algor_batch_compare[,1]))
+algor_batch<- algor_batch_compare[,c(1,4:16)] %>% dplyr::group_by(method) %>% dplyr::summarise(across(.cols=everything(),.fns=median)) %>% filter( str_detect(method,"Multigrate") | str_detect(method,"totalVI") | str_detect(method,"sciPENN")) %>% as.data.frame()
+# algor_batch<-algor_batch[,c(1,6:13,2:5,14)]
+# algor_batch$bio_cons_score<-rowMeans(algor_batch[,c(2:9)])
+# algor_batch$batch_rm_score<-rowMeans(algor_batch[,c(10:14)])
+# algor_batch$final_score<-0.5*algor_batch$bio_cons_score + 0.5*algor_batch$batch_rm_score
+
+colnames(algor_batch)<-map_metrics_name(colnames(algor_batch))
+rownames(algor_batch)<-algor_batch[,1]
+algor_batch<-algor_batch[,-1]
+
+ann_col<-data.frame(row.names=colnames(algor_batch),group=c(rep("Batch removal",5),rep("Bio Conservation",8)))
+pheatmap::pheatmap(algor_batch,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_batch_algor_compare_heatmap.pdf",annotation_col = ann_col,cluster_rows = F,cluster_cols = F,show_rownames = T,show_colnames = T, display_numbers = T,number_format = "%.2f",width=8,height = 4)
+
+# Generate html input
+html_out<- function(in_tab,sel_cols){
+  colnames(in_tab)<- map_metrics_name(colnames(in_tab))
+  in_tab[,sel_cols]<- round(in_tab[,sel_cols],3)
+  return(in_tab)
+}
+
+write.table(html_out(pair_rna_adt_bmmc_p10_acc[,c(17,2:16)],4:16), file = "../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+scADT_accuracy_BMMC_p10_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+
+write.table(html_out(pair_rna_adt_bmmc_p10_acc[,c(17,2:16)],4:16), "../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_BMMC_p10_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_bmmc_s2d1_acc[,c(17,2,3,9:14)],4:9),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_BMMC_s2d1_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_hspc_p10_acc[,c(11,9,10,2,4)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_HSPC_p10_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+
+write.table(html_out(pair_rna_adt_wbc_acc[,c(11,9,10,2,4)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_WBC_RawData_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_covid_acc[,c(12,10,11,2,4)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_COVID19_RawData_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_10xNSCLC_acc[,c(6,2:5)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_10xNSCLC_RawData_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_10xkidney_acc[,c(6,2:5)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_10xKidneyCancer_RawData_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_lymph_a1_acc[,c(8,2,3,5:7)],4:6),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_lymph_node_A1_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+
+write.table(html_out(pair_rna_adt_lymph_acc[,c(6,2:5)],4:5),"../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_accuracy_lymph_node_paired_metrics_summary.csv",sep=",",row.names = F,col.names=T,quote=F)
+```
+
+
+
+
+# 2. robustness
+```{r}
+pair_rna_adt_bmmc_rob<-read.table("../stage2_res/SCMMIB_metrics_final/scRNA+ADT/robustness/scRNA+ADT_robustness_BMMC_p10_paired_metrics_summary.csv",sep=",",header=T,row.names = 1)
+
+pair_rna_adt_bmmc_rob$RNA<-str_sub(pair_rna_adt_bmmc_rob$RNA,start=2)
+pair_rna_adt_bmmc_rob$ADT<-str_sub(pair_rna_adt_bmmc_rob$ADT,start=2)
+
+pair_rna_adt_bmmc_rob2<-pair_rna_adt_bmmc_rob
+pair_rna_adt_bmmc_rob2$method<-map_algor_name(gsub("-louvain","",pair_rna_adt_bmmc_rob2$method))
+pair_rna_adt_bmmc_rob2<-pair_rna_adt_bmmc_rob2 %>%  filter( !str_detect(method,"batch")) %>%
+                                         filter( !str_detect(method,"louvain"))
+# 2.1 evaluate the robustness metrics across downsample gradients
+
+p_tab<-subset(pair_rna_adt_bmmc_rob2,RNA=="100" )
+p_tab2<-melt(p_tab[,c(1,4:18)],id.vars = c('method','RNA','ADT'))
+p_tab2$ADT<-factor(p_tab2$ADT,levels=c("10","25","50","75","100"))
+p_tab2$variable<-map_metrics_name(p_tab2$variable) 
+p<-ggplot(p_tab2,aes(x=variable,y=value,fill=ADT))+geom_boxplot(width=0.5)+scale_fill_manual("ADT down level (%)",values=basecol(5))+widetemp+xlab(NULL)+ylab(NULL)+ theme(plot.margin=unit(c(0,0,0,2),'lines'))
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_eval/pair_RNA+ADT_robustness_down_ADT_evaluation.pdf",width = 12,height=5)
+
+p_tab2$variable<-as.factor(p_tab2$variable)
+cor_tab1<- p_tab2 %>% dplyr::group_by(variable) %>% dplyr::summarise(cor_val=cor(value,as.numeric(ADT),use = "complete.obs"),group="ADT_down")
+
+cor_tab1_avg1<- p_tab2 %>% dplyr::group_by(variable,ADT) %>% dplyr::summarise(mean=mean(value,na.rm=T))
+cor_tab1_avg2<- cor_tab1_avg1 %>% dplyr::group_by(variable)  %>% dplyr::summarise(cor_val=cor(mean,as.numeric(ADT),use = "complete.obs"),group="ADT_down")
+
+
+p_tab<-subset(pair_rna_adt_bmmc_rob2,ADT=="100" )
+p_tab2<-melt(p_tab[,c(1,4:18)],id.vars = c('method','RNA','ADT'))
+p_tab2$RNA<-factor(p_tab2$RNA,levels=c("10","25","50","75","100"))
+p_tab2$variable<-map_metrics_name(p_tab2$variable) 
+
+p<-ggplot(p_tab2,aes(x=variable,y=value,fill=RNA))+geom_boxplot(width=0.5)+scale_fill_manual("scRNA down level (%)",values=basecol(5))+widetemp+xlab(NULL)+ylab(NULL)+ theme(plot.margin=unit(c(0,0,0,2),'lines'))
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_eval/pair_RNA+ADT_robustness_down_RNA_evaluation.pdf",width = 12,height=5)
+
+cor_tab2<- p_tab2 %>% dplyr::group_by(variable) %>% dplyr::summarise(cor_val=cor(value,as.numeric(RNA),use = "complete.obs"),group="RNA_down")
+cor_tab2_avg1<- p_tab2 %>% dplyr::group_by(variable,RNA) %>% dplyr::summarise(mean=mean(value,na.rm=T))
+cor_tab2_avg2<- cor_tab2_avg1 %>% dplyr::group_by(variable)  %>% dplyr::summarise(cor_val=cor(mean,as.numeric(RNA),use = "complete.obs"),group="RNA_down")
+
+p_tab<-subset(pair_rna_adt_bmmc_rob2,ADT==RNA)
+p_tab2<-melt(p_tab[,c(1,4:18)],id.vars = c('method','RNA','ADT'))
+p_tab2$RNA<-factor(p_tab2$RNA,levels=c("10","25","50","75","100"))
+p_tab2$variable<-map_metrics_name(p_tab2$variable) 
+
+p<-ggplot(p_tab2,aes(x=variable,y=value,fill=RNA))+geom_boxplot(width=0.5)+scale_fill_manual("Both modalities down level (%)",values=basecol(5))+widetemp+xlab(NULL)+ylab(NULL)+ theme(plot.margin=unit(c(0,0,0,2),'lines'))
+ggsave(p,filename="../stage2_figs/metric_summary/pair_RNA+ADT/metric_eval/pair_RNA+ADT_robustness_down_both_evaluation.pdf",width = 12,height=5)
+
+cor_tab3<- p_tab2 %>% dplyr::group_by(variable) %>% dplyr::summarise(cor_val=cor(value,as.numeric(RNA),use = "complete.obs"),group="Both_down")
+cor_tab3_avg1<- p_tab2 %>% dplyr::group_by(variable,RNA) %>% dplyr::summarise(mean=mean(value,na.rm=T))
+cor_tab3_avg2<- cor_tab3_avg1 %>% dplyr::group_by(variable)  %>% dplyr::summarise(cor_val=cor(mean,as.numeric(RNA),use = "complete.obs"),group="Both_down")
+
+
+cor_tab<-rbind(cor_tab1,cor_tab2,cor_tab3)
+cor_tab_avg<-rbind(cor_tab1_avg2,cor_tab2_avg2,cor_tab3_avg2)
+
+p_tab<-dcast(cor_tab,group~variable,value.var="cor_val" )
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+p_tab<-p_tab[c("Both_down","RNA_down","ADT_down"),]
+rownames(p_tab)<-c("Both modalities downsample","scRNA downsample","ADT downsample")
+ann_col<-data.frame(row.names = colnames(p_tab),metric_type=c(rep("Batch removal",5),rep("Biological conservation",8)))
+pheatmap::pheatmap(p_tab,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_eval/pair_RNA+ADT_robustness_metric_correlation_all_heatmap.pdf",show_colnames = T,show_rownames = T,scale="none",annotation_col = ann_col,cluster_rows = F,cluster_cols = F,display_numbers = T, number_format = "%.2f",width = 10,height=3)
+
+
+p_tab<-dcast(cor_tab_avg,group~variable,value.var="cor_val" )
+rownames(p_tab)<-p_tab[,1]
+p_tab<-p_tab[,-1]
+p_tab<-p_tab[c("Both_down","RNA_down","ADT_down"),]
+rownames(p_tab)<-c("Both modalities downsample","scRNA downsample","ADT downsample")
+ann_col<-data.frame(row.names = colnames(p_tab),metric_type=c(rep("Batch removal",5),rep("Biological conservation",8)))
+pheatmap::pheatmap(p_tab,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_eval/pair_RNA+ADT_robustness_metric_correlation_mean_heatmap.pdf",show_colnames = T,show_rownames = T,scale="none",annotation_col = ann_col,cluster_rows = F,cluster_cols = F,display_numbers = T, number_format = "%.2f",width = 10,height=3)
+
+
+# 2.2 Then summarise downsample 10% and down gradient auc sores with biological conservation metrics
+
+# Down 10
+
+get_score<-function(x){
+  x2 = na.omit(x)
+  return((x-min(x2))/(max(x2)-min(x2)))
+}
+
+r_tab1<-subset(pair_rna_adt_bmmc_rob2,RNA=="100" & ADT=="10")[,c(1,9:16)]
+r_tab2<-subset(pair_rna_adt_bmmc_rob2,RNA=="10" & ADT=="100")[,c(1,9:16)]
+r_tab3<-subset(pair_rna_adt_bmmc_rob2,RNA=="10" & ADT=="10")[,c(1,9:16)]
+r_score_tab1<-data.frame(
+                    ADT_10=rowMeans(apply(r_tab1[,-1],2,get_score),na.rm = T),
+                    RNA_10=rowMeans(apply(r_tab2[,-1],2,get_score),na.rm = T),
+                    both_10=rowMeans(apply(r_tab3[,-1],2,get_score),na.rm = T)
+                   )
+rownames(r_score_tab1)<-r_tab1[,1]
+
+
+colnames(r_tab1)[-1]<-paste0(colnames(r_tab1)[-1],"_ADT")
+colnames(r_tab2)[-1]<-paste0(colnames(r_tab2)[-1],"_RNA")
+colnames(r_tab3)[-1]<-paste0(colnames(r_tab3)[-1],"_Both")
+
+p_tab<-cbind(r_tab1[,-1],r_tab2[,-1],r_tab3[,-1])
+p_tab2<-apply(p_tab,2,get_score)
+rownames(p_tab)<-r_tab1[,1]
+colnames(p_tab)<-map_metrics_name2(colnames(p_tab))
+
+ann_col<-data.frame(row.names=colnames(p_tab),metric_grp=c(rep("ADT downsample",8),rep("scRNA downsample",8),rep("Both modalities downsample",8)))
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_downsample_10_full_heatmap.pdf",width=12,height=6,cluster_rows = F,cluster_cols = F,annotation_col = ann_col,display_numbers = T,number_format = "%.2f")
+
+write.table(p_tab,file = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_downsample_10_full.txt",sep = "\t",row.names = T,col.names = T,quote=F)
+
+
+# Downsample AUC score
+calc_auc<-function(indata, increasing=T){
+  if (!increasing){
+    indata = rev(indata)
+  }
+  n_val=length(indata)
+  # max_val=max(indata)
+  max_val=indata[n_val]
+  if (is.na(max_val)){
+    return(NA)
+  }
+  if (max_val==0 && TRUE){
+    return(NA)
+  }else{
+    x=indata/max_val
+    x[x>1]<-1
+    out = (x[1]+2*sum(x[2:(n_val-1)])+x[n_val])/(2*n_val-2)
+    return(out)
+  }
+}
+
+sel_tab<-subset(pair_rna_adt_bmmc_rob2,RNA==100 )
+sel_tab$ADT<-factor(sel_tab$ADT,levels=c("10","25","50","75","100"))
+tmp_score1<-sel_tab %>% dplyr::group_by(method) %>% dplyr::summarise(ARI=calc_auc(ARI),
+                                                      AMI=calc_auc(AMI),
+                                                      graph_cLISI=calc_auc(graph_cLISI), 
+                                                      isolated_labels_ASW=calc_auc(isolated_labels_ASW),
+                                                      ARI.l1=calc_auc(ARI.l1),
+                                                      AMI.l1=calc_auc(AMI.l1),
+                                                      graph_cLISI.l1=calc_auc(graph_cLISI.l1), 
+                                                      isolated_labels_ASW.l1=calc_auc(isolated_labels_ASW.l1),
+                                                      )
+tmp_score1<-data.frame(tmp_score1)
+rownames(tmp_score1)<-tmp_score1[,1]
+tmp_score1<-tmp_score1[,-1]
+colnames(tmp_score1)<-paste0(colnames(tmp_score1),"_ADT")
+
+
+sel_tab<-subset(pair_rna_adt_bmmc_rob2,ADT==100 )
+sel_tab$RNA<-factor(sel_tab$RNA,levels=c("10","25","50","75","100"))
+
+tmp_score2<-sel_tab %>% group_by(method) %>% dplyr::summarise(ARI=calc_auc(ARI),
+                                                      AMI=calc_auc(AMI),
+                                                      graph_cLISI=calc_auc(graph_cLISI), 
+                                                      isolated_labels_ASW=calc_auc(isolated_labels_ASW),
+                                                      ARI.l1=calc_auc(ARI.l1),
+                                                      AMI.l1=calc_auc(AMI.l1),
+                                                      graph_cLISI.l1=calc_auc(graph_cLISI.l1), 
+                                                      isolated_labels_ASW.l1=calc_auc(isolated_labels_ASW.l1)
+                                                      )
+tmp_score2<-data.frame(tmp_score2)
+rownames(tmp_score2)<-tmp_score2[,1]
+tmp_score2<-tmp_score2[,-1]
+colnames(tmp_score2)<-paste0(colnames(tmp_score2),"_RNA")
+
+sel_tab<-subset(pair_rna_adt_bmmc_rob2,ADT==RNA)
+sel_tab$RNA<-factor(sel_tab$RNA,levels=c("10","25","50","75","100"))
+
+tmp_score3<-sel_tab %>% group_by(method) %>% dplyr::summarise(ARI=calc_auc(ARI),
+                                                      AMI=calc_auc(AMI),
+                                                      graph_cLISI=calc_auc(graph_cLISI), 
+                                                      isolated_labels_ASW=calc_auc(isolated_labels_ASW),
+                                                      ARI.l1=calc_auc(ARI.l1),
+                                                      AMI.l1=calc_auc(AMI.l1),
+                                                      graph_cLISI.l1=calc_auc(graph_cLISI.l1), 
+                                                      isolated_labels_ASW.l1=calc_auc(isolated_labels_ASW.l1),
+                                                      )
+tmp_score3<-data.frame(tmp_score3)
+rownames(tmp_score3)<-tmp_score3[,1]
+tmp_score3<-tmp_score3[,-1]
+colnames(tmp_score3)<-paste0(colnames(tmp_score3),"_Both")
+
+p_tab<-cbind(tmp_score1,tmp_score2,tmp_score3)
+colnames(p_tab)<-map_metrics_name2(colnames(p_tab))
+
+write.table(p_tab,file = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_downsample_auc_full.txt",sep = "\t",row.names = T,col.names = T,quote=F)
+
+pheatmap(p_tab,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_downsample_auc_full_heatmap.pdf",annotation_col = ann_col,cluster_rows = F,cluster_cols = F,height=6,width=12,display_numbers = T,number_format = "%.2f")
+
+# compute final score
+
+auc_score<-data.frame(ADT_down_auc=rowMeans(apply(tmp_score1,2,get_score),na.rm = T),
+                      RNA_down_auc=rowMeans(apply(tmp_score2,2,get_score),na.rm = T),
+                      Both_down_auc=rowMeans(apply(tmp_score3,2,get_score),na.rm = T)
+                      )
+auc_score<-auc_score[rownames(r_score_tab1),]
+down_sample_final<-cbind(r_score_tab1,auc_score)
+# down_sample_final$down_10_final<-rowMeans(r_score_tab1)
+# down_sample_final$down_auc_final<-rowMeans(auc_score)
+down_sample_final$down10_score<-rowMeans(r_score_tab1)
+down_sample_final$down_auc<-rowMeans(auc_score)
+# down_sample_final$final_score=0.5*rowMeans(r_score_tab1)+0.5*rowMeans(auc_score)
+down_sample_final<-down_sample_final %>% dplyr::arrange(desc(down10_score+down_auc))
+colnames(down_sample_final)<-c("ADT 10% depth","scRNA 10% depth","Both modalities 10%  depth","ADT Downsample AUC","scRNA Downsample AUC","Both Downsample AUC","Downsample 10% score","Downsample AUC score")
+ann_col<-data.frame(row.names=colnames(down_sample_final),metric_group=c(rep("Metric score with 10% seq depth",3),rep("Downsample AUC",3),rep("Score summary",2)))
+
+pheatmap(down_sample_final,filename = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_down_sample_final.pdf",width=8,height=5,annotation_col = ann_col,cluster_rows = F,cluster_cols = F,display_numbers = T,number_format = "%.2f")
+write.table(down_sample_final,file = "../stage2_figs/metric_summary/pair_RNA+ADT/metric_heatmap/pair_RNA+ADT_downsample_final.txt",sep = "\t",row.names = T,col.names = T,quote=F)
+
+# summary rank plot
+p_tab<-down_sample_final
+p_tab<-cbind(rownames(p_tab),p_tab)
+colnames(p_tab)[1]<-"algor"
+p_tab<-merge(out_latent,p_tab,by="algor")
+colnames(p_tab)[1]<- "method"
+
+p_tab_rank <- p_tab %>% mutate(Rank=min_rank(desc(rank(`Downsample 10% score`)+rank(`Downsample AUC score`,na.last=F)))) %>%  arrange(Rank)  %>% select(Rank,everything())
+
+
+pair_rob_row_info <- data.frame(id = p_tab_rank$method)
+pair_rob_column_info <- data.frame(id = colnames(p_tab_rank),
+                          group = c("Text","Text","Text",
+                                    rep("Metric score with 10% seq depth", 3),
+                                    rep("Downsample AUC", 3), 
+                                    "Metric score with 10% seq depth",
+                                    "Downsample AUC"), 
+                          geom = c(rep("text",3),
+                                   rep("circle",6),
+                                   rep("bar",2)),
+                          width = c(1.5,6.5,rep(2,9)),
+                          overlay = F)
+pair_rob_palettes <- list(   "Text" = "black",
+                    "Metric score with 10% seq depth" = "Blues",
+                   "Downsample AUC" = "Greens"
+                   )
+p<-plot_scmmib_summary(data = p_tab_rank,
+                       row_info = pair_rob_row_info,
+                       column_info =pair_rob_column_info,
+                       palettes = pair_rob_palettes,
+                       rank = TRUE,
+                       rect_normalize = T
+                       )
+# ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_robustness.pdf",device = cairo_pdf,width = 210, height = 157, units = "mm")
+ggsave(p,file="../stage2_figs/metric_summary/soft_rank/pair_RNA_ADT_robustness.pdf",height = 8,width = 10)
+
+pair_rna_adt_bmmc_rob_html <- pair_rna_adt_bmmc_rob2
+# pair_rna_adt_bmmc_rob_html$method <- map_algor_name(gsub("-louvain","",pair_rna_adt_bmmc_rob_html$method))
+colnames(pair_rna_adt_bmmc_rob_html)<-map_metrics_name(colnames(pair_rna_adt_bmmc_rob_html))
+pair_rna_adt_bmmc_rob_html[,c(4:16)]<-round(pair_rna_adt_bmmc_rob_html[,c(4:16)],3)
+write.table(pair_rna_adt_bmmc_rob_html, file = "../stage2_res/SCMMIB_metrics_final/html_visualization_files/scRNA+ADT_robustness_BMMC_p10_paired_metrics_summary.csv",sep=",",row.names = F,col.names = T,quote = F)
+
+```
+
