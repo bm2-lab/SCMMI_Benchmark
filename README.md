@@ -15,7 +15,8 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 ![Workflow](imgs/Wrokflow.png)
 
 ### Benchmark datasets summary
-All datasets analyzed in SCMMIB study are listed below.
+All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods/).
+
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
 |--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
 | BMMC Multiome      | scRNA + scATAC       | 12 donors from 4 sites     | Human   | 69,249      | bone marrow mononuclear cells           |
@@ -35,7 +36,7 @@ All datasets analyzed in SCMMIB study are listed below.
 <br>
 
 ### Benchmark Methods
-
+All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods/).
 
 | Method                                                                         | Article                                                                   | Time |
 |--------------------------------------------------------------------------------|---------------------------------------------------------------------------|------|
