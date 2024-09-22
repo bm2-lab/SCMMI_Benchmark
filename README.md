@@ -68,7 +68,7 @@ We provided  a [simple example](docs/scmmib_summary_table_demo.r) and [reference
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
 ### Benchmark datasets summary
-All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods/).
+All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods).
 
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
 |--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
@@ -89,7 +89,7 @@ All datasets analyzed in SCMMIB study are listed below. Details of these dataset
 <br>
 
 ### Benchmark Methods
-All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods/).
+All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods).
 
 | Method                                                                         | Article                                                                   | Time |
 |--------------------------------------------------------------------------------|---------------------------------------------------------------------------|------|
@@ -136,6 +136,6 @@ All benchmark methods analyzed in SCMMIB study are listed below. Details of thes
 
 
 ### SCMMIB manuscript
-Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was accepted for Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods/)
+Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was accepted for Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods)
 
 Our stage2 manuscript was submitted.

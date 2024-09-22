@@ -98,6 +98,7 @@ def mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
 <br>
 
 ```python
+# For paired scRNA and scATAC imputation methods
 imputation_pair_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path, method, outf=None ):
 
 ```
@@ -111,6 +112,7 @@ imputation_pair_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, ata
 <br>
 
 ```python
+# For unpaired scRNA and scATAC mosaic imputation methods
 imputation_mosaic_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path,method,paired="s1d1",unpaired="s3d10",batch="batch", outf=None ):
 ```
 - metadata_path: path of cell metadata.
@@ -126,6 +128,7 @@ imputation_mosaic_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, a
 
 
 ```python
+# For unpaired scRNA and ADT mosaic imputation methods
 imputation_mosaic_rna_adt(metadata_path,rna_imp_path=None, rna_path=None,adt_imp_path=None, adt_path=None, method="sciPENN",paired="s3d6", unpaired="s2d1", batch="batch", outf=None ):
 ```
 - metadata_path: path of cell metadata.
@@ -141,7 +144,7 @@ imputation_mosaic_rna_adt(metadata_path,rna_imp_path=None, rna_path=None,adt_imp
 
 ```python
 imputation_rna(metadata_path,rna_imp_path, rna_path, method, outf=None ):
-#  For scMVAE only.
+#  For scMVAE only. Only evaluate the scRNA modality.
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
@@ -150,9 +153,10 @@ imputation_rna(metadata_path,rna_imp_path, rna_path, method, outf=None ):
 <br>
 
 ```python
+# For stabmap mosaic scRNA and scATAC only, which omit scATAC knn smoothing for too few scATAC peaks.
+
 imputation_stabmap(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path,method,paired="s1d1",unpaired="s3d10",batch="batch", outf=None ):
 
-# For stabmap mosaic scRNA and scATAC only, omit scATAC knn smoothing for too few scATAC peaks.
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
@@ -175,11 +179,11 @@ mouse_brain_divide(func, adatas,
                         outf = None
                         ):
 ## A wrap function for mouse brain dataset and all functions above.
-"""
-    10X mouse brain datasets calculated batch removal metrics for 
-    WT(wild type) and AD brain separately, then took the average
-     of metrics from two disease status group.
-"""
+
+#    10X mouse brain datasets calculated batch removal metrics for 
+#    WT(wild type) and AD brain separately, then took the average
+#     of metrics from two disease status group.
+
 # Example
 mouse_brain_divide(paired_latent_metrics,[adata1,adata2], method, 'louvain', batch,label, outfile)
 ```
