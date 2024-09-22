@@ -26,30 +26,6 @@ from scipy.sparse.csgraph import connected_components
 
 from scmmib.knn_smooth import knn_smoothing
 
-def mouse_brain_divide(func, adatas,
-                        method,
-                        cluster,
-                        batch = 'batch',
-                        label = 'cell_type',
-                        outf = None
-                        ):
-    """
-    10X mouse brain datasets calculated batch removal metrics for 
-    WT(wild type) and AD brain separately, then took the average
-     of metrics from two disease status group.
-    """
-    print("10x mouse data")
-    out_dat1 = func(adatas[0], method, cluster,batch, label, None)
-    out_dat2 = func(adatas[1], method, cluster,batch, label, None) 
-    out_dat = out_dat1.copy()
-    avg_col = out_dat1.columns.to_list()[3:]
-    out_dat[avg_col] = (out_dat1[avg_col]+ out_dat2[avg_col])/2
-    out_dat[["nCell"]] = out_dat1[["nCell"]] + out_dat2[["nCell"]]
-    if outf:
-        print(f"writing to {outf}")
-        out_dat.to_csv(outf)
-    else:    
-        return(outf)
 
 def foscttm(x: np.ndarray, y: np.ndarray,
             **kwargs) -> Tuple[np.ndarray, np.ndarray]:
@@ -114,7 +90,6 @@ def nearest_cell_celltype(
     nearest_cell_cell_type_list = pd.Series([nearest_mod2_of_rna_ratio, nearest_rna_of_mod2_ratio, nearest_cell_cell_type_mean], 
                                             index=['RNA', rep_2, 'Mean'])
     return nearest_cell_cell_type_list
-
 
 
 def scmmib_gc(adata, label_key):
@@ -1257,3 +1232,30 @@ def imputation_stabmap(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_
     else:
         print("output to stdout")
         return(out_metrics)
+    
+
+
+def mouse_brain_divide(func, adatas,
+                        method,
+                        cluster,
+                        batch = 'batch',
+                        label = 'cell_type',
+                        outf = None
+                        ):
+    """
+    10X mouse brain datasets calculated batch removal metrics for 
+    WT(wild type) and AD brain separately, then took the average
+     of metrics from two disease status group.
+    """
+    print("10x mouse data")
+    out_dat1 = func(adatas[0], method, cluster,batch, label, None)
+    out_dat2 = func(adatas[1], method, cluster,batch, label, None) 
+    out_dat = out_dat1.copy()
+    avg_col = out_dat1.columns.to_list()[3:]
+    out_dat[avg_col] = (out_dat1[avg_col]+ out_dat2[avg_col])/2
+    out_dat[["nCell"]] = out_dat1[["nCell"]] + out_dat2[["nCell"]]
+    if outf:
+        print(f"writing to {outf}")
+        out_dat.to_csv(outf)
+    else:    
+        return(outf)

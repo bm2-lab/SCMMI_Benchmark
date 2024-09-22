@@ -17,7 +17,11 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 ![Workflow](imgs/Wrokflow.png)
 
 ## SCMMIB package
-We created a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. `scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. <br>
+We created a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br>
+The k-NN smoothing was performed  with `knn_smooth` function built in scmmib package, which was sourced a published method:
+**knn_smoothing paper**: https://www.biorxiv.org/content/10.1101/217737.full.pdf, and **github**: https://github.com/yanailab/knn-smoothing.
+
+`scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. <br>
 
 ### Dependencies
 - Python >=3.8, `scib, scglue, scanpy` for python package.
@@ -54,7 +58,7 @@ import scmmib
 The `plot_scmmib_table.r` is a simplified version of visualization tool adapted from both [`funkyheatmap` package](https://funkyheatmap.github.io/funkyheatmap/) and `scib_knit_table` function in `scib` package, as these two tools requires complex input format and numerous input format restrictions. <br>
 The `plot_scmmib_table.r` can be used alone with input of simple `R data.frame` format. All summary figures were generated with `plot_scmmib_table.r` tool. </br>
 
-We provided  a [simple example](scmmib_summary_table_demo.r) for using `plot_scmmib_table.r`. <br>
+We provided  a [simple example](docs/scmmib_summary_table_demo.r) for using `plot_scmmib_table.r`. <br>
 
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 

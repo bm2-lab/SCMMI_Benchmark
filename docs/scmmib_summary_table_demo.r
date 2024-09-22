@@ -2,7 +2,7 @@ library(ggplot2)
 
 source("plot_scmmib_table.r")
 # setting row groups if available
-p_tab_rank<-read.table("./test/scmmib_table_demo.txt",sep='\t',header=T)
+p_tab_rank<-read.table("../test/scmmib_table_demo.txt",sep='\t',header=T)
 
 mosaic_rna_atac_acc_row_info <- data.frame(id = p_tab_rank$method)
 mosaic_rna_atac_acc_column_info <- data.frame(id = colnames(p_tab_rank),
