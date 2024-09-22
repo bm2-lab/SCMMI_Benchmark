@@ -6,7 +6,7 @@
 
 SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
 
-- This folder contains [scmmib package](scmmib) for SCMMIB benchmark metrics and [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived in [stage1](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1).
+- This folder contains [scmmib package](scmmib) for SCMMIB benchmark metrics and [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1).
 
 - Our website for benchmark results visualization is available at [SCMMIB_website]().
 - For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
@@ -17,29 +17,34 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 ![Workflow](imgs/Wrokflow.png)
 
 ## SCMMIB package
-We created a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br>
-The k-NN smoothing was performed  with `knn_smooth` function built in scmmib package, which was sourced a published method:
-**knn_smoothing paper**: https://www.biorxiv.org/content/10.1101/217737.full.pdf, and **github**: https://github.com/yanailab/knn-smoothing.
+We created a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> <br>
+
+The `knn_smooth` function  in scmmib package was sourced  from a published method:
+**knn_smoothing paper**: https://www.biorxiv.org/content/10.1101/217737.full.pdf, and **github**: https://github.com/yanailab/knn-smoothing. <br>
+
+We provided  a [simple example](docs/scmmib_demo.py) and [reference manual](docs/scmmib_py_manual.md) for using `scmmib` package. <br>
 
 `scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. <br>
 
 ### Dependencies
-- Python >=3.8, `scib, scglue, scanpy` for python package.
-- R >=3 and `dplyr, scales, ggimage,ggplot2,  cowplot` for R tool.
+- Python >=3.8, `scib, scglue, scanpy` for `scmmib` python package.
+- R >=3 and `dplyr, scales, ggimage,ggplot2,  cowplot` for `plot_scmmib_table.r` R tool.
 
 ### Installation </br>
-1. preparing the envrionment. </br>
+1. Preparing the envrionment. </br>
 - **Option 1:** install dependencies
 - for example, for python package, three dependencies can be install with pip
 ```Bash
 pip install scib scglue scanpy
 ```
 - **Option 2:** use a conda env of mixture dependencies </br>
-A conda tool (miniconda for etc.) can be installed easily from [anaconda website](https://docs.anaconda.com/miniconda/miniconda-install/).</br>
-The
+Th conda tool (miniconda) can be installed  from [anaconda website](https://docs.anaconda.com/miniconda/miniconda-install/).</br>
+Then create and enter the conda environment.
 ```Bash
 conda env create -f scmmib_env.yml
+conda activate scmmib
 ```
+
 2. Install scmmib package.
 ```Bash
 # download SCMMIB
@@ -48,17 +53,17 @@ git clone https://github.com/bm2-lab/SCMMI_Benchmark
 cd SCMMI_benchmark
 pip install .
 ```
-3. test the installation in python
+3. Test the installation in python
 ```python
 import scmmib
 ```
 
-#### Example for `plot_scmmib_table.r`
+#### A simplified summary visualization tool `plot_scmmib_table.r`
 
 The `plot_scmmib_table.r` is a simplified version of visualization tool adapted from both [`funkyheatmap` package](https://funkyheatmap.github.io/funkyheatmap/) and `scib_knit_table` function in `scib` package, as these two tools requires complex input format and numerous input format restrictions. <br>
 The `plot_scmmib_table.r` can be used alone with input of simple `R data.frame` format. All summary figures were generated with `plot_scmmib_table.r` tool. </br>
 
-We provided  a [simple example](docs/scmmib_summary_table_demo.r) for using `plot_scmmib_table.r`. <br>
+We provided  a [simple example](docs/scmmib_summary_table_demo.r) and [reference manual](docs/scmmib_tab_r_manual.md) for using `plot_scmmib_table.r`. <br>
 
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
