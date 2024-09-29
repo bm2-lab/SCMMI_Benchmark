@@ -6,7 +6,7 @@
 
 SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
 
-- This folder contains [scmmib package](scmmib) for SCMMIB benchmark metrics and [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The accepted stage 1 manuscript is available at : https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572. 
+- This folder contains [scmmib package](scmmib) for SCMMIB benchmark metrics and [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The stage 1 proposal manuscript is available at [Nature Methods Register Report folder](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). 
 
 - Our website for benchmark results visualization is available at [SCMMIB_website]().
 - For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
@@ -17,7 +17,7 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 ![Workflow](imgs/Wrokflow.png)
 
 ## SCMMIB package
-We created a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> <br>
+We created a python package `scmmib` based on `scanpy` pipeline, which laso referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> 
 
 The `knn_smooth` function  in scmmib package was sourced  from a published method:
 **knn_smoothing paper**: https://www.biorxiv.org/content/10.1101/217737.full.pdf, and **github**: https://github.com/yanailab/knn-smoothing. <br>
@@ -67,7 +67,7 @@ We provided  a [simple example](docs/scmmib_summary_table_demo.r) and [reference
 
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
-### Benchmark datasets summary
+## Benchmark datasets summary
 All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572)
 
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
@@ -88,7 +88,7 @@ All datasets analyzed in SCMMIB study are listed below. Details of these dataset
 | Spleen SPOTS       | spatial+scRNA+ADT  | 2 samples                  | Mouse   | 5,336       | spleen                                  |
 <br>
 
-### Benchmark Methods
+## Benchmark Methods
 All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods).
 
 | Method                                                                         | Article                                                                   | Time |
@@ -131,11 +131,11 @@ All benchmark methods analyzed in SCMMIB study are listed below. Details of thes
 | [Seurat v5 bridge](https://satijalab.org/seurat/)                               | [Nature Methods](https://doi.org/10.1038/s41587-023-01767-y)              | 2023 |
 | [Stabmap](https://github.com/MarioniLab/StabMap)                               | [Nature Methods](https://doi.org/10.1038/s41587-023-01766-z)              | 2023 |
 | [scMoMaT](https://github.com/PeterZZQ/scMoMaT)                                 | [Nature communications](https://doi.org/10.1038/s41467-023-36066-2)       | 2023 |
-| [SpatialGlue](https://github.com/JinmiaoChenLab/SpatialGlue)                   | [bioRxiv](https://doi.org/10.21203/rs.3.rs-2921471/v1)                    | 2023 |
+| [SpatialGlue](https://github.com/JinmiaoChenLab/SpatialGlue)                   | [Nature Methods](https://www.nature.com/articles/s41592-024-02316-4)                    | 2024 |
 | [MIDAS](https://github.com/labomics/midas)                                     | [Nature Biotechnology](https://doi.org/10.1038/s41587-023-02040-y)        | 2024 |
 
 
-### SCMMIB manuscript
+## Related SCMMIB manuscript
 Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was accepted for Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods)
 
 Our stage2 manuscript was submitted.
