@@ -14,7 +14,7 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 
 
 ## SCMMIB workflow
-![Workflow](imgs/Wrokflow.png)
+![Workflow](imgs/Workflow.png)
 
 ## SCMMIB package
 We created a python package `scmmib` based on `scanpy` pipeline, which laso referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> 
@@ -136,6 +136,6 @@ All benchmark methods analyzed in SCMMIB study are listed below. Details of thes
 
 
 ## Related SCMMIB manuscript
-Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was accepted for Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods)
+Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was public in Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods) in [links](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572).
 
 Our stage2 manuscript was submitted.
