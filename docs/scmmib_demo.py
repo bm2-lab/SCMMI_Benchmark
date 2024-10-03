@@ -21,7 +21,7 @@ def test_unpair():
     adata_unpaired = sc.AnnData(latent_rna_reindex, obs=meta, dtype='float32')
     adata_unpaired.obsm['RNA'] = latent_rna_reindex
     adata_unpaired.obsm['ATAC'] = latent_atac_reindex
-    unpaired_latent_metrics(adata_unpaired, method = "bindSC", cluster = 'louvain', batch = 'batch', label = 'cell_type', mods = ["RNA","ATAC"], outf=None, embed_acc=True) # outf=None,return stdout, or return the path or "outf" param
+    unpaired_latent_metrics(adata_unpaired, method = "bindSC", cluster = 'louvain', batch = None, label = 'cell_type', mods = ["RNA","ATAC"], outf=None, embed_acc=True) # outf=None,return stdout, or return the path or "outf" param
     # embed_acc determine wheter calculate the accuracy metrics for embed in "mods" params
 
 # Then we provided a demo for method with graph output rather than embedding.
@@ -57,4 +57,7 @@ def test_mosaic():
     latents = [latent_pair, latent_rna, latent_mod2]
     mosaic_latent_metrics(latents=latents,metadatas=metadatas,paired="s2d1", unpaired="s3d6", mod2="adt", batch="batch",label="cell_type",latent_path=myfiles[0], method='SeuratV5', writef=True)
     
-   
+
+test_unpair()
+# test_graph()
+# test_mosaic()
