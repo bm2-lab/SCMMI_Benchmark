@@ -1,12 +1,13 @@
-# SCMMI_Benchmark
+# Single-cell Multi-modal Integrations Benchmark (SCMMIB)
 
 ---------------------------
 
 ## SCMMIB introduction
 
-SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
+SCMMIB project provided a benchmark workflow for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
 
-- This folder contains [scmmib package](scmmib) for SCMMIB benchmark metrics and [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The stage 1 proposal manuscript is available at [Nature Methods Register Report folder](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). 
+- This folder contains [scmmib package](scmmib) for computing SCMMIB benchmark evaluation metrics;
+-  And [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The stage 1 proposal manuscript is available at [Nature Methods Register Report folder](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). 
 
 - Our website for benchmark results visualization is available at [SCMMIB_website]().
 - For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
@@ -19,8 +20,8 @@ SCMMI_benchmark (SCMMIB) is a benchmark pipeline for evaluating the usability, a
 ## SCMMIB package
 We created a python package `scmmib` based on `scanpy` pipeline, which laso referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> 
 
-The `knn_smooth` function  in scmmib package was sourced  from a published method:
-**knn_smoothing paper**: https://www.biorxiv.org/content/10.1101/217737.full.pdf, and **github**: https://github.com/yanailab/knn-smoothing. <br>
+The `knn_smooth` function  in scmmib package was sourced  from a public knn smoothing method:
+[**knn_smoothing paper**](https://www.biorxiv.org/content/10.1101/217737.full.pdf), and [**github**](https://github.com/yanailab/knn-smoothing). <br>
 
 We provided  a [simple example](docs/scmmib_demo.py) and [reference manual](docs/scmmib_py_manual.md) for using `scmmib` package. <br>
 
