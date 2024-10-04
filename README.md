@@ -27,7 +27,7 @@ We provided  [3 demo cases](docs/scmmib_demo.ipynb) and [reference manual](docs/
 
 ### Dependencies
 - Python >=3.8, `scib, scglue, scanpy` for `scmmib` python package.
-- R >=3 and `dplyr, scales, ggimage,ggplot2,  cowplot` for `plot_scmmib_table.r` R tool.
+- R >=3 and `dplyr, scales, ggimage,ggplot2, cowplot` for `plot_scmmib_table.r` R tool.
 
 ### Installation </br>
 1. Preparing the envrionment. </br>
@@ -36,6 +36,8 @@ We provided  [3 demo cases](docs/scmmib_demo.ipynb) and [reference manual](docs/
 ```Bash
 pip install scib scglue scanpy
 ```
+
+
 - **Option 2:** use a conda env of mixture dependencies </br>
 Th conda tool (miniconda) can be installed  from [anaconda website](https://docs.anaconda.com/miniconda/miniconda-install/).</br>
 Then create and enter the conda environment.
@@ -56,6 +58,14 @@ pip install .
 ```python
 import scmmib
 ```
+
+- FAQ
+A bug may occur for graph LISI metrics as follows:
+```Bash
+FileNotFoundError, [Errno 2] No such file or directory: '/tmp/lisi_svo3el2i/graph_lisi_indices_0.txt'
+```
+The related GitHub issue in scib project is [here](https://github.com/theislab/scib/issues/333) and a posssible [solution](https://github.com/theislab/scib/blob/main/scib/knn_graph/README.md).
+
 
 #### A simplified summary visualization tool `plot_scmmib_table.r`
 
