@@ -67,7 +67,7 @@ We provided  a [**demo noteook**]((docs/scmmib_summary_table_demo.html)) and [re
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
 ## Benchmark datasets summary
-All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572)
+All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). The processed datasets are available in a public Figshare repostiory [link]()
 
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
 |--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
@@ -138,3 +138,9 @@ All benchmark methods analyzed in SCMMIB study are listed below. Details of thes
 Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was public in Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods) in [links](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572).
 
 Our stage2 manuscript was submitted.
+
+## Citation
+#### Stage 1 manuscript
+Fu, Shaliu; Wang, Shuguang; Si, Duanmiao; Li, Gaoyang; Gao, Yawei; Liu, Qi (2024). Benchmarking single-cell multi-modal data integrations. figshare. Journal contribution. https://doi.org/10.6084/m9.figshare.26789572.v1
+#### Datasets
+fu, . shaliu . (2024). SCMMIB Register Report Stage 2 processed datasets. doi: 10.6084/m9.figshare.27161451.v1
