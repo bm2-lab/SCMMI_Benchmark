@@ -142,5 +142,6 @@ Our stage2 manuscript was submitted.
 ## Citation
 #### Stage 1 manuscript
 Fu, Shaliu; Wang, Shuguang; Si, Duanmiao; Li, Gaoyang; Gao, Yawei; Liu, Qi (2024). Benchmarking single-cell multi-modal data integrations. figshare. Journal contribution. https://doi.org/10.6084/m9.figshare.26789572.v1
+
 #### Datasets
-fu, . shaliu . (2024). SCMMIB Register Report Stage 2 processed datasets. doi: 10.6084/m9.figshare.27161451.v1
+SCMMIB Register Report Stage 2 processed datasets. doi: 10.6084/m9.figshare.27161451.v1
