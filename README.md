@@ -59,8 +59,8 @@ pip install .
 import scmmib
 ```
 
-- FAQ
-A bug may occur for graph LISI metrics as follows:
+#### FAQ: 
+- A bug may occur for graph LISI metrics as follows:
 ```Bash
 FileNotFoundError, [Errno 2] No such file or directory: '/tmp/lisi_svo3el2i/graph_lisi_indices_0.txt'
 ```
@@ -79,7 +79,7 @@ More examples can be referred in [figure reproducibility code](manuscript_figure
 ## Benchmark datasets summary
 All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). The processed datasets are available in a public Figshare repostiory [link](https://figshare.com/articles/dataset/SCMMIB_Register_Report_Stage_2_processed_datasets/27161451/1).
 
-| dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
+| Dataset name       | Multi-omics  | Batches                     | Species | Number of cells | sample/tissue type                                  |
 |--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
 | BMMC Multiome      | scRNA + scATAC       | 12 donors from 4 sites     | Human   | 69,249      | bone marrow mononuclear cells           |
 | BMMC CITE-seq      | scRNA + ADT        | 12 donors from 4  sites    | Human   | 90,261      | bone marrow mononuclear cells           |
@@ -98,7 +98,7 @@ All datasets analyzed in SCMMIB study are listed below. Details of these dataset
 <br>
 
 ## Benchmark Methods
-All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were introduced in our stage1 manuscript in [figshare folder](https://springernature.figshare.com/registered-reports_nmethods).
+All benchmark methods analyzed in SCMMIB study are listed below. Details of these methods were available in our Register Report Stage 1 manuscript in [figshare folder](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572).
 
 | Method                                                                         | Article                                                                   | Time |
 |--------------------------------------------------------------------------------|---------------------------------------------------------------------------|------|
@@ -154,4 +154,4 @@ Our stage2 manuscript was submitted.
 Fu, Shaliu; Wang, Shuguang; Si, Duanmiao; Li, Gaoyang; Gao, Yawei; Liu, Qi (2024). Benchmarking single-cell multi-modal data integrations. figshare. Journal contribution. https://doi.org/10.6084/m9.figshare.26789572.v1
 
 #### Datasets
-SCMMIB Register Report Stage 2 processed datasets. doi: 10.6084/m9.figshare.27161451.v1
+SCMMIB project processed datasets. figshare. Dataset. https://doi.org/10.6084/m9.figshare.27161451.v2
