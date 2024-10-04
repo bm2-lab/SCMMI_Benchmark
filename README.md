@@ -11,17 +11,16 @@ SCMMIB project provided a benchmark workflow for evaluating the usability, accur
 - For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
 
 
-
 ## SCMMIB workflow
 ![Workflow](imgs/Workflow.png)
 
 ## SCMMIB package
-We created a python package `scmmib` based on `scanpy` pipeline, which laso referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> 
+We developed a python package `scmmib` based on `scanpy` pipeline, which referred to some integration metrics in `scib` and `scglue` package, and extended to different single-cell multimodal integration tasks. <br> 
 
 The `knn_smooth` function  in scmmib package was sourced  from a public knn smoothing method:
 [knn_smoothing paper](https://www.biorxiv.org/content/10.1101/217737.full.pdf), and [github](https://github.com/yanailab/knn-smoothing). <br>
 
-We provided  [3 demo cases](docs/scmmib_demo.ipynb) and [reference manual](docs/scmmib_py_manual.md) for using `scmmib` package. <br>
+We provided  [3 demo cases](docs/scmmib_demo.ipynb) and [reference manual](docs/scmmib_py_manual.md) for using the `scmmib` package. <br>
 
 `scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. <br>
 
@@ -69,7 +68,10 @@ The related GitHub issue in scib project is [here](https://github.com/theislab/s
 
 #### A simplified summary visualization tool `plot_scmmib_table.r`
 
-The `plot_scmmib_table.r` is a simplified version of visualization tool adapted from both [`funkyheatmap` package](https://funkyheatmap.github.io/funkyheatmap/) and `scib_knit_table` function in `scib` package, as these two tools requires complex input format and numerous input format restrictions. <br>
+The `plot_scmmib_table.r` is a simplified version of summary table visualization tool, which is adapted from both [`funkyheatmap` package](https://funkyheatmap.github.io/funkyheatmap/) and `scib_knit_table` function in `scib` package, as these two tools requires complex input format and numerous input format restrictions. <br>
+A demo output:
+![table](imgs/table_demo.png)
+
 The `plot_scmmib_table.r` can be used alone with input of simple `R data.frame` format. All summary figures were generated with `plot_scmmib_table.r` tool. </br>
 
 We provided  a [**demo noteook**]((docs/scmmib_summary_table_demo.html)) and [reference manual](docs/scmmib_tab_r_manual.md) for using `plot_scmmib_table.r`. <br>
