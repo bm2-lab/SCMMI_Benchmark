@@ -585,7 +585,7 @@ def mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
         if writef:
             paired_latent_metrics(adata_all, method = method, cluster = 'louvain', batch = batch, label = label,outf=paired_metrics_path)
         else:
-            adata_all = paired_latent_metrics(adata_all, method = method, cluster = 'louvain', batch = batch, label = label)
+            adata_all = paired_latent_metrics(adata_all, method = method, cluster = 'louvain', batch = batch, label = label,outf=None)
 
         metadata_unpaired = metadata_all_origin[metadata_all_origin[batch] == unpaired]
         latent_rna.index = latent_rna.index.str.replace('_rna$', '', regex=True)

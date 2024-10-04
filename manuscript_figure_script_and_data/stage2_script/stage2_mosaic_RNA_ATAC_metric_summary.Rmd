@@ -296,7 +296,7 @@ calc_sd<-function(data,sel_cols=metric_cols){
   out<-data2 %>% group_by(method) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
   return(out)
 }
-
+cv <- function(x) 100*( sd(x)/mean(x))
 cv_out<-c() # variable name of "cv_output" will crash the rstudio!
 for (mosaic_data in list(mosaic_rna_atac_bmmc_acc1,mosaic_rna_atac_bmmc_acc2,mosaic_rna_atac_share_acc1,mosaic_rna_atac_share_acc2)){
   cv_out<-rbind(cv_out, calc_cv(mosaic_data, sel_cols=metric_cols))

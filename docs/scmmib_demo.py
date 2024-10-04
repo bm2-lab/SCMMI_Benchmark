@@ -36,16 +36,16 @@ def test_graph():
     adata = sc.AnnData(latent_reordered, obs=meta, dtype='float32')
     method = "SeuratV4"
     adata.obsp[method] = latent_reordered
-    paired_graph_metrics(adata, method = "bindSC", cluster = 'louvain', batch = 'batch', label = 'cell_type', mods = ["RNA","ATAC"], outf=None)
+    paired_graph_metrics(adata, method = "SeuratV4", cluster = 'louvain', batch = 'batch', label = 'cell_type', outf=None)
 
 # Finally we showed a demo for Seurat v5 bridge mosaic scRNA and ADT integration.
 def test_mosaic():
     # 1. load Seurat v5 generated latent embeddings of paired, unpaired RNA and unpaired ADT, as well as metadata
-    metadata = "../manuscript_figure_script_and_data/stage2_res/metadata/BMMC_RNA+ADT_s2d1_s3d6_metadata.csv.csv.gz"
+    metadata = "../manuscript_figure_script_and_data/stage2_res/metadata/BMMC_RNA+ADT_s2d1_s3d6_metadata.csv.gz"
     myfiles = ["../test/BMMC-CITE_seq-s2d1_s3d6-scRNA+ADT-SeuratV5_adt_reduc_latent.csv","../test/BMMC-CITE_seq-s2d1_s3d6-scRNA+ADT-SeuratV5_multi_lap_latent.csv","../test/BMMC-CITE_seq-s2d1_s3d6-scRNA+ADT-SeuratV5_rna_reduc_latent.csv"]
     meta = pd.read_csv(metadata, index_col='barcode', header=0, dtype='category')
-    paired="s2d1"
-    unpaired="s3d6"
+    paired = "s3d6"
+    unpaired = "s2d1"
     batch="batch"
     # 2. match paired and unpaired cell information in metadata, and input the latents and metadatas for metrics evaluation
     # pair_cells = meta[meta[batch] == paired].index

@@ -450,7 +450,7 @@ calc_sd<-function(data,sel_cols=metric_cols){
   out<-data2 %>% group_by(algor) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
   return(out)
 }
-
+cv <- function(x) 100*( sd(x)/mean(x))
 cv_output<-c()
 for (pair_data in list(pair_rna_atac_bmmc_p10_acc,pair_rna_atac_bmmc_s3d10_acc[,c(1,9:14,17)],pair_rna_atac_share_raw_acc,pair_rna_atac_hspc_p10_acc,pair_rna_atac_pbmc_acc,pair_rna_atac_brain_acc)){
   cv_output<-rbind(cv_output,calc_cv(pair_data,metric_cols))

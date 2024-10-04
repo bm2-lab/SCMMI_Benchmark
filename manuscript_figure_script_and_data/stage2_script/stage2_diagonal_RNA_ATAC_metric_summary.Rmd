@@ -527,7 +527,7 @@ calc_sd<-function(data,sel_cols=select_col_names){
   out<-data2 %>% group_by(method) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
   return(out)
 }
-
+cv <- function(x) 100*( sd(x)/mean(x))
 cv_output<-c()
 for (diagonal_data in list(diagonal_rna_atac_bmmc_p10_acc,diagonal_rna_atac_share_raw_acc,diagonal_rna_atac_hspc_p10_acc[,c(1,20:28)],diagonal_rna_atac_pbmc_acc,diagonal_rna_atac_brain_acc)){
   cv_output<-rbind(cv_output,calc_cv(diagonal_data,metric_cols))

@@ -549,7 +549,7 @@ calc_sd<-function(data,sel_cols=metric_cols){
   out<-data2 %>% group_by(algor) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
   return(out)
 }
-
+cv <- function(x) 100*( sd(x)/mean(x))
 cv_output<-c()
 for (pair_data in list(pair_rna_adt_bmmc_p10_acc,pair_rna_adt_bmmc_s2d1_acc[,c(9:14,17)],pair_rna_adt_wbc_acc[,c(2,4,11)],pair_rna_adt_hspc_p10_acc[,c(2,4,11)],pair_rna_adt_covid_acc[,c(2,5,12)],pair_rna_adt_lymph_a1_acc,pair_rna_adt_lymph_acc,pair_rna_adt_10xNSCLC_acc,pair_rna_adt_10xkidney_acc)){
   cv_output<-rbind(cv_output,calc_cv(pair_data,metric_cols))

@@ -290,7 +290,7 @@ calc_sd<-function(data,sel_cols=select_col_names){
   out<-data2 %>% group_by(method) %>% summarise(across(.cols=everything(),.fns=sd)) %>% melt()
   return(out)
 }
-
+cv <- function(x) 100*( sd(x)/mean(x))
 cv_output<-c()
 for (mosaic_data in list(mosaic_rna_adt_bmmc_acc1,mosaic_rna_adt_bmmc_acc1_2,mosaic_rna_adt_bmmc_acc2)){
   cv_output<-rbind(cv_output,calc_cv(mosaic_data, sel_cols=metric_cols))
