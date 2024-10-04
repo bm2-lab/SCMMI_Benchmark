@@ -1,0 +1,2 @@
+,Output,nCell,FOSCTTM,nearest_cell_barcode,nearest_cell_barcode-RNA,nearest_cell_barcode-ADT,nearest_cell_celltype,nearest_cell_celltype-RNA,nearest_cell_celltype-ADT,nearest_cell_celltype.l1,nearest_cell_celltype.l1-RNA,nearest_cell_celltype.l1-ADT
+SeuratV5,Embedding,20930.0,0.05397744032904714,0.005016722408026756,0.0061156235069278544,0.003917821309125657,0.7281414237935977,0.7118012422360248,0.7444816053511706,0.9270425226946966,0.915910176779742,0.9381748686096513

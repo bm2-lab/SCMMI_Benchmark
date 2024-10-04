@@ -606,7 +606,7 @@ def mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
         if writef:
             unpaired_latent_metrics(adata_unpaired, method = method, cluster = 'louvain', batch = batch, label = label, mods = ["RNA",mod2.upper()], outf=unpaired_metrics_path, embed_acc=False)
         else:
-            adata_unpaired = unpaired_latent_metrics(adata_unpaired, method = method, cluster = 'louvain', batch = batch, label = label, mods = ["RNA",mod2.upper()],outf=None, embed_acc=False)
+            adata_unpaired2 = unpaired_latent_metrics(adata_unpaired, method = method, cluster = 'louvain', batch = batch, label = label, mods = ["RNA",mod2.upper()],outf=None, embed_acc=False)
 
     if mod2 == "adt":
         latent_paried = latents[0].copy()
@@ -635,11 +635,11 @@ def mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
     if not writef:
         if mod2 == "adt":
             if len(latents) == 3:
-                return([adata_all, adata_unpaired, adata_noadt])
+                return([adata_all, adata_unpaired2, adata_noadt])
             else:
                 return([adata_noadt])
         else:
-            return([adata_all, adata_unpaired])
+            return([adata_all, adata_unpaired2])
 
 
 def mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10", 
