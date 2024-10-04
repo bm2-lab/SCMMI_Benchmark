@@ -1,0 +1,35 @@
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+source("../scmmib/plot_scmmib_table.r")
+# setting row groups if available
+p_tab_rank<-read.table("../test/scmmib_table_demo.txt",sep='\t',header=T,check.names = F)
+
+
+diagonal_acc_row_info <- data.frame(id = p_tab_rank$method)
+diagonal_acc_column_info <- data.frame(id = colnames(p_tab_rank),
+                          group = c("Text","Text",
+                                    rep("Embedding accuracy", 2),
+                                    rep("Cell alignment accuracy", 5), 
+                                    "Embedding accuracy",
+                                    "Cell alignment accuracy"), 
+                          geom = c(rep("text",2),
+                                   rep("circle",7),
+                                   rep("bar",2)),
+                          width = c(1.5,6.5,rep(2,9)),
+                          overlay = F)
+diagonal_acc_palettes <- list(   "Text" = "black",
+                    "Embedding accuracy" = "Blues",
+                   "Cell alignment accuracy" = "Greens"
+                   )
+p<-plot_scmmib_summary(data = p_tab_rank,
+                       row_info = diagonal_acc_row_info,
+                       column_info =diagonal_acc_column_info,
+                       palettes = diagonal_acc_palettes,
+                       rank = TRUE,
+                       rect_normalize = T
+                       )
+p
+
+```
+

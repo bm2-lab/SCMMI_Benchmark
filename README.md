@@ -21,9 +21,9 @@ We created a python package `scmmib` based on `scanpy` pipeline, which laso refe
 The `knn_smooth` function  in scmmib package was sourced  from a public knn smoothing method:
 [**knn_smoothing paper**](https://www.biorxiv.org/content/10.1101/217737.full.pdf), and [**github**](https://github.com/yanailab/knn-smoothing). <br>
 
-We provided  a [simple example](docs/scmmib_demo.py) and [reference manual](docs/scmmib_py_manual.md) for using `scmmib` package. <br>
+We provided  a [simple example](docs/scmmib_demo.ipynb) and [reference manual](docs/scmmib_py_manual.md) for using `scmmib` package. <br>
 
-`scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. <br>
+`scmmib` package also includes a simplified summary visualization tool  `plot_scmmib_table.r` in R. Here is an example: [demo notebook](docs/scmmib_summary_table_demo.html)<br>
 
 ### Dependencies
 - Python >=3.8, `scib, scglue, scanpy` for `scmmib` python package.

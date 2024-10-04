@@ -2,6 +2,7 @@ library(dplyr)
 library(scales)
 library(ggimage)
 library(cowplot)
+library(tibble)
 
 add_column_if_missing <- function(df, ...) {
   column_values <- list(...)
