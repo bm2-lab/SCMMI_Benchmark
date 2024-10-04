@@ -67,7 +67,7 @@ We provided  a [**demo noteook**]((docs/scmmib_summary_table_demo.html)) and [re
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
 ## Benchmark datasets summary
-All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). The processed datasets are available in a public Figshare repostiory [link]()
+All datasets analyzed in SCMMIB study are listed below. Details of these datasets were introduced in our [stage1 manuscript](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). The processed datasets are available in a public Figshare repostiory [link](https://figshare.com/articles/dataset/SCMMIB_Register_Report_Stage_2_processed_datasets/27161451/1).
 
 | dataset name       | multi-omics type | Batch                      | species | cell number | tissue                                  |
 |--------------------|------------------|----------------------------|---------|-------------|-----------------------------------------|
