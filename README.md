@@ -74,7 +74,7 @@ A demo output:
 
 The `plot_scmmib_table.r` can be used alone with input of simple `R data.frame` format. All summary figures were generated with `plot_scmmib_table.r` tool. </br>
 
-We provided  a [**demo noteook**]((docs/scmmib_summary_table_demo.html)) and [reference manual](docs/scmmib_tab_r_manual.md) for using `plot_scmmib_table.r`. <br>
+We provided  a [**demo noteook**](docs/scmmib_summary_table_demo.html) and [reference manual](docs/scmmib_tab_r_manual.md) for using `plot_scmmib_table.r`. <br>
 
 More examples can be referred in [figure reproducibility code](manuscript_figure_script_and_data).
 
