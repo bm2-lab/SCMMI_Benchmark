@@ -42,8 +42,8 @@ The ``scmmib`` package can be installed via following 2 steps:
     scmmib.__version__
 
 .. note:: 
-    - A bug may occur for graph LISI metrics as follows:
+ - A bug may occur for graph LISI metrics as follows:
 
-    "FileNotFoundError, [Errno 2] No such file or directory: '/tmp/lisi_svo3el2i/graph_lisi_indices_0.txt'""
+    `"FileNotFoundError, [Errno 2] No such file or directory: '/tmp/lisi_svo3el2i/graph_lisi_indices_0.txt'""`
 
     The related GitHub issue in scib project is `here <https://github.com/theislab/scib/issues/333>`__ and a posssible `solution <https://github.com/theislab/scib/blob/main/scib/knn_graph/README.md>`__ .

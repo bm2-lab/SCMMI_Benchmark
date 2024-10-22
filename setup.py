@@ -4,7 +4,10 @@
 from setuptools import setup, find_packages
 requirements = [
     "numpy>=1.16.2",
-    "scanpy>=1.4.6"
+    "scanpy>=1.4.6",
+    "scib",
+    "scanpy",
+    "scglue"
 ]
 
 

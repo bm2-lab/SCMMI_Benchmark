@@ -10,17 +10,24 @@ import os
 
 sys.path.insert(0, os.path.abspath('../../'))
 
+import scmmib
 
 project = 'SCMMIB'
 copyright = '2024, Shaliu Fu'
 author = 'Shaliu Fu'
-release = '0.0.1'
+# release = '0.0.1'
+release = scmmib.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+        # 'sphinx.ext.autodoc',
+        # 'sphinx.ext.autosummary',
         'myst_parser',
+        'sphinx.ext.intersphinx',
+        'nbsphinx',
+
         ]
 
 templates_path = ['_templates']

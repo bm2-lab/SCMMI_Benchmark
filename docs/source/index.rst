@@ -15,15 +15,11 @@ Welcome to SCMMIB's documentation!
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Contents:
     
     setup
-    scmmib
+    tutorial
+    api
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
