@@ -1,5 +1,6 @@
 ## User manual of SCMMIB package
 
+### paired_latent_metrics
 ```python
 ## for all paired integration metrics except for graph output
 paired_latent_metrics(adata,
@@ -18,6 +19,7 @@ cluster: clustering methods, deprecated. <br>
 - outf: output metric filename. Stdout if `outf = None`. <br>
 <br>
 
+### paired_graph_metrics
 ```python
 ## for all paired integration metrics of graph output
 
@@ -37,7 +39,7 @@ cluster: clustering methods, deprecated. <br>
 - outf: output metric filename. Stdout if `outf = None`. <br>
 <br>
 
-
+### unpaired_latent_metrics
 ```python
 ## for all unpaired integration metrics
 unpaired_latent_metrics(adata,
@@ -60,6 +62,7 @@ cluster: clustering methods, deprecated. <br>
 <br>
 <br>
 
+### mosaic_latent_metrics
 ```python
 ## for mosaic integration metrics in accuracy and downsample robustness tasks.
 mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10", 
@@ -79,6 +82,7 @@ mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
 
 <br>
 
+### mosaic_cnk_latent_metrics
 ```python
 # for mosaic integration metrics in paired sizes robustness tasks. only focus on unpair size
 def mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10", 
@@ -97,6 +101,7 @@ def mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
 - writef: write two metrics file in `latent_path` if True. stdout if FALSE. <br>
 <br>
 
+### imputation_pair_rna_atac
 ```python
 # For paired scRNA and scATAC imputation methods
 imputation_pair_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path, method, outf=None ):
@@ -111,6 +116,7 @@ imputation_pair_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, ata
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
+### imputation_mosaic_rna_atac
 ```python
 # For unpaired scRNA and scATAC mosaic imputation methods
 imputation_mosaic_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path,method,paired="s1d1",unpaired="s3d10",batch="batch", outf=None ):
@@ -126,7 +132,7 @@ imputation_mosaic_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, a
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
-
+### imputation_mosaic_rna_adt
 ```python
 # For unpaired scRNA and ADT mosaic imputation methods
 imputation_mosaic_rna_adt(metadata_path,rna_imp_path=None, rna_path=None,adt_imp_path=None, adt_path=None, method="sciPENN",paired="s3d6", unpaired="s2d1", batch="batch", outf=None ):
@@ -142,6 +148,7 @@ imputation_mosaic_rna_adt(metadata_path,rna_imp_path=None, rna_path=None,adt_imp
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
+### imputation_rna
 ```python
 imputation_rna(metadata_path,rna_imp_path, rna_path, method, outf=None ):
 #  For scMVAE only. Only evaluate the scRNA modality.
@@ -152,6 +159,7 @@ imputation_rna(metadata_path,rna_imp_path, rna_path, method, outf=None ):
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
+### imputation_stabmap
 ```python
 # For stabmap mosaic scRNA and scATAC only, which omit scATAC knn smoothing for too few scATAC peaks.
 
@@ -169,7 +177,7 @@ imputation_stabmap(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
-
+### mouse_brain_divide
 ```python
 mouse_brain_divide(func, adatas,
                         method,
