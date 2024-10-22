@@ -7,9 +7,10 @@ Welcome to SCMMIB's documentation!
 ==================================
 
 .. image:: _static/Workflow.png
-    :width: 140
+    :width: 240
     :alt: SCMMIB icon
-    :align: right
+    :align: left
+
 
 **scmmib**\  package is designed based on based on scanpy pipeline, which referred to some integration metrics in scib and scglue package, and extended to different single-cell multimodal integration tasks.
 
