@@ -13,7 +13,7 @@ paired_latent_metrics(adata,
 ```
 - adata: `anndata` object for joint embedding. the `obs` is celll metadata.<br>
 - method: name of the input algorithm. <br>
-cluster: clustering methods, deprecated. <br>
+- cluster: clustering methods, deprecated. <br>
 - batch: column name of batch used. Do not consider batch effect removal if `batch=None`.<br>
 - label: column name of cell type used. Do not consider biological conservation if `label=None`<br>
 - outf: output metric filename. Stdout if `outf = None`. <br>
@@ -33,7 +33,7 @@ paired_graph_metrics(adata,
 ```
 - adata: `anndata` object for joint graph. the `obs` is celll metadata.<br>
 - method: name of the input algorithm. <br>
-cluster: clustering methods, deprecated. <br>
+- cluster: clustering methods, deprecated. <br>
 - batch: column name of batch used. Do not consider batch effect removal if `batch=None`.<br>
 - label: column name of cell type used. Do not consider biological conservation if `label=None`<br>
 - outf: output metric filename. Stdout if `outf = None`. <br>
@@ -44,7 +44,7 @@ cluster: clustering methods, deprecated. <br>
 ## for all unpaired integration metrics
 unpaired_latent_metrics(adata,
                             method,
-                            cluster,
+                            cluster = 'louvain',
                             batch = 'batch',
                             label = 'cell_type',
                             mods = ['RNA', 'ATAC'],
@@ -54,7 +54,7 @@ unpaired_latent_metrics(adata,
 ```
 - adata: `anndata` object. the `obs` is celll metadata. Two latent embeddings are stored in obsm['RNA'] and obsm['ATAC'] or obsm['ADT']<br>
 - method: name of the input algorithm. <br>
-cluster: clustering methods, deprecated. <br>
+- cluster: clustering methods, deprecated. <br>
 - batch: column name of batch used. Do not consider batch effect removal if `batch=None`.<br>
 - label: column name of cell type used. Do not consider biological conservation if `label=None`<br>
 - mods: the name of obsm data used for evaluation. <br>
@@ -85,7 +85,7 @@ mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
 ### mosaic_cnk_latent_metrics
 ```python
 # for mosaic integration metrics in paired sizes robustness tasks. only focus on unpair size
-def mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10", 
+mosaic_cnk_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10", 
                             mod2="atac", batch="batch",label="cell_type",latent_path="",
                              method='sciPENN', writef=True):
 ```
@@ -181,7 +181,7 @@ imputation_stabmap(metadata_path,rna_imp_path, rna_path,atac_imp_path, atac_path
 ```python
 mouse_brain_divide(func, adatas,
                         method,
-                        cluster,
+                        cluster = 'louvain',
                         batch = 'batch',
                         label = 'cell_type',
                         outf = None

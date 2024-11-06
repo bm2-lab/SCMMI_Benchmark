@@ -7,7 +7,8 @@ requirements = [
     "scanpy>=1.4.6",
     "scib",
     "scanpy",
-    "scglue"
+    "scglue",
+    "datatable",
 ]
 
 
