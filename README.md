@@ -31,14 +31,15 @@ User tutorial and api documentations can be found in an online document: (https:
 
 ### Installation </br>
 1. Preparing the envrionment. </br>
-- **Option 1:** install dependencies
-- for example, for python package, three dependencies can be install with pip
+- **Option 1:** install dependencies by pip. </br>
+- for example, for python package, python dependencies can be install with pip:
 ```Bash
-pip install scib scglue scanpy
+# pip install scib scglue scanpy # install main dependencies to an existing environment.
+pip install -r pip_requirement.txt # install all python dependencies with fixed version
 ```
 
 
-- **Option 2:** use a conda env of mixture dependencies </br>
+- **Option 2:** use a new conda env of mixture dependencies (stable). </br>
 Th conda tool (miniconda) can be installed  from [anaconda website](https://docs.anaconda.com/miniconda/miniconda-install/).</br>
 Then create and enter the conda environment.
 ```Bash
