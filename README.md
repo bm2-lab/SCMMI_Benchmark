@@ -4,7 +4,8 @@
 
 SCMMIB project provided a benchmark workflow for evaluating the usability, accuracy, robustness and scalability of single-cell multimodal integration algorithms, including 65 single-cell multi-modal integration methods in 40 algorithms involving modalities of DNA, RNA, protein and spatial multi-omics for paired integration, unpaired diagonal integration, and unpaired mosaic integration.
 
-- This folder contains [scmmib package](scmmib) for computing SCMMIB benchmark evaluation metrics;
+- This folder contains [scmmib package](#scmmib-package) for computing SCMMIB benchmark evaluation metrics, as well as the [benchmark datasets](#datasets) and [benchmark algorithms](#benchmark-methods).
+
 -  And [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The registered stage 1  manuscript is available at Nature Methods Register Report [Figshare](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). 
 
 - Our website for benchmark results visualization is available at [SCMMIB_website](https://bm2-lab.github.io/SCMMIB-reproducibility/).

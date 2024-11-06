@@ -12,7 +12,7 @@ The ``scmmib`` package can be installed via following 2 steps:
     pip install scib scglue scanpy
 
 
--  **Option 2 (recomended):**/  install all dependencies with conda.
+-  **Option 2 (recomended):**  install all dependencies with conda.
   
 .. code-block:: bash
     :linenos:
