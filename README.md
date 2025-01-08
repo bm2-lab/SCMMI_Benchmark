@@ -149,10 +149,14 @@ All benchmark methods analyzed in SCMMIB study are listed below. Details of thes
 
 
 ## Related SCMMIB manuscript
-Our stage1 manuscript "Benchmarking single-cell multi-modal data integrations." was public in Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods) in [links](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572).
 
-Our stage2 manuscript:
-Fu, Shaliu; Wang, Shuguang; Si, Duanmiao; Li, Gaoyang; Gao, Yawei; Liu, Qi. Benchmarking single-cell multi-modal data integrations. Nature Methods, 2025 (accepted)
+#### Our stage2 final manuscript:  
+Fu, Shaliu; Wang, Shuguang; Si, Duanmiao; Li, Gaoyang; Gao, Yawei; Liu, Qi. Benchmarking single-cell multi-modal data integrations, Nature Methods, 2025 (accepted)
+
+#### Our stage1 proposal manuscript:
+ "Benchmarking single-cell multi-modal data integrations." was public in Nature Methods register  report [figshare folder](https://springernature.figshare.com/registered-reports_nmethods) in [links](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572).
+
+
 
 ## Citation
 #### Stage 1 manuscript
