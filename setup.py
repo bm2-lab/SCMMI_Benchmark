@@ -9,6 +9,7 @@ requirements = [
     "scanpy",
     "scglue",
     "datatable",
+    "pandas>=2.2",
 ]
 
 
@@ -38,7 +39,7 @@ author = (
 
 setup(
     author=author,
-    author_email="23310100@tongji.edu.cn",
+    author_email="adam.tongji@gmail.com",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",

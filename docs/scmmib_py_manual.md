@@ -11,7 +11,7 @@ paired_latent_metrics(adata,
                           outf = './text.txt'
                          )
 ```
-- adata: `anndata` object for joint embedding. the `obs` is celll metadata.<br>
+- adata: `anndata` object for joint embedding. The `obs` is celll metadata. The input latent embedding stores in `adata.X`.<br>
 - method: name of the input algorithm. <br>
 - cluster: clustering methods, deprecated. <br>
 - batch: column name of batch used. Do not consider batch effect removal if `batch=None`.<br>
@@ -31,7 +31,7 @@ paired_graph_metrics(adata,
                           outf = './text.txt'
                          )
 ```
-- adata: `anndata` object for joint graph. the `obs` is celll metadata.<br>
+- adata: `anndata` object for joint graph. The `obs` is cell metadata. The input graph stores in `adata.obsp[method]`<br>
 - method: name of the input algorithm. <br>
 - cluster: clustering methods, deprecated. <br>
 - batch: column name of batch used. Do not consider batch effect removal if `batch=None`.<br>
@@ -69,7 +69,7 @@ mosaic_latent_metrics(latents,metadatas,paired="s1d1", unpaired="s3d10",
                             mod2="atac", batch="batch",label="cell_type",
                             latent_path="", method='sciPENN', writef=True):
 ```
-- latents: python list of np.ndarry or pandas Dataframe object for paired, RNA and the other modality. <br>
+- latents: python list of np.ndarry or pandas Dataframe object for paired, RNA and the other modality. Detail see tutorials. <br>
 - metadatas: python list of np.ndarry or pandas Dataframe object for cell metadata of paired, RNA and the other modality. <br>
 - paired: batch name of paired cells in metadata batch column. <br>
 - unpaired: batch name of unpaired cells in metadata batch column. <br>
@@ -109,9 +109,9 @@ imputation_pair_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, ata
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
-- rna_path: path of rna raw h5ad file.
+- rna_path: path of rna raw h5ad file. Used as rna gold standard.  
 - atac_imp_path: path of atac imputation csv file.
-- atac_path: path of atac raw h5ad file.
+- atac_path: path of atac raw h5ad file. Used as atac gold standard.  
 - method: name of the input algorithm. <br>
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
@@ -123,9 +123,9 @@ imputation_mosaic_rna_atac(metadata_path,rna_imp_path, rna_path,atac_imp_path, a
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
-- rna_path: path of rna raw h5ad file.
+- rna_path: path of rna raw h5ad file. Used as rna gold standard.
 - atac_imp_path: path of atac imputation csv file.
-- atac_path: path of atac raw h5ad file.
+- atac_path: path of atac raw h5ad file. Used as atac gold standard.
 - method: name of the input algorithm. <br>
 - paired: batch name of paired cells in metadata batch column. <br>
 - unpaired: batch name of unpaired cells in metadata batch column. <br>
@@ -139,9 +139,9 @@ imputation_mosaic_rna_adt(metadata_path,rna_imp_path=None, rna_path=None,adt_imp
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
-- rna_path: path of rna raw h5ad file.
+- rna_path: path of rna raw h5ad file. Used as rna gold standard.
 - adt_imp_path: path of atac imputation csv file.
-- adt_path: path of atac raw h5ad file.
+- adt_path: path of atac raw h5ad file. Used as adt gold standard.
 - method: name of the input algorithm. <br>
 - paired: batch name of paired cells in metadata batch column. <br>
 - unpaired: batch name of unpaired cells in metadata batch column. <br>
@@ -155,7 +155,7 @@ imputation_rna(metadata_path,rna_imp_path, rna_path, method, outf=None ):
 ```
 - metadata_path: path of cell metadata.
 - rna_imp_path: path of rna imputation csv file.
-- rna_path: path of rna raw h5ad file.
+- rna_path: path of rna raw h5ad file. Used as rna gold standard.
 - outf: output to given file name or pd.Dataframe() (None). <br>
 <br>
 
