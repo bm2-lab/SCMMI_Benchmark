@@ -9,7 +9,7 @@ requirements = [
     "scanpy",
     "scglue",
     "datatable",
-    "pandas>=2.2",
+    "pandas>=1.5",
 ]
 
 
