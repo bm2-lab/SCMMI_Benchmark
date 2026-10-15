@@ -8,8 +8,12 @@ SCMMIB project provided a benchmark workflow for evaluating the usability, accur
 
 -  And [figure reproducibility code](manuscript_figure_script_and_data) for manuscript figures in stage 2 project. The scripts and datasets analyzed in stage 1  are archived [here](https://github.com/bm2-lab/SCMMI_Benchmark/tree/stage1). The registered stage 1  manuscript is available at Nature Methods Register Report [Figshare](https://springernature.figshare.com/articles/journal_contribution/Benchmarking_single-cell_multi-modal_data_integrations/26789572). 
 
+
 - Our website for benchmark results visualization is available at [SCMMIB_website](https://bm2-lab.github.io/SCMMIB-reproducibility/).
 - For reproducibility of benchmark methods, metrics and visualization, we had a GitHub repository at [SCMMIB_pipeline](https://github.com/bm2-lab/SCMMIB_pipeline).
+
+### Figure source data correction(261015)
+Source data for fig. 6b, 6c and extended fig. 7e were pasted incorrectly, esulting in duplicated data. The correct source data files were provided in [folder](manuscript_figure_script_and_data/fig_source_data_correction), with correction marked red.
 
 
 ## SCMMIB workflow
